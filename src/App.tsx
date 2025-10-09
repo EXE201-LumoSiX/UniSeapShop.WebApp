@@ -14,6 +14,7 @@ import ProductByCategory from "./pages/ProductByCategory";
 import Cart from "./pages/User/Cart";
 import Payment from "./pages/Payment/Payment";
 import SellItem from "./pages/Suplier/Sell";
+import SellPage from "./pages/Suplier/SellPage";
 
 const App: React.FC = () => {
   const handleLogin = () => {
@@ -28,7 +29,7 @@ const App: React.FC = () => {
         <Route path="/category/:categoryName" element={<ProductByCategory />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/payment" element={<Payment />} />
-        <Route path="/sell" element={<SellItem />} />
+        <Route path="/sell" element={<SellPage />} />
         {/* Public routes */}
         <Route
           path="/"
