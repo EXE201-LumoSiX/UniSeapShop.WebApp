@@ -1,0 +1,44 @@
+{
+  "name": "UniSeap - Chợ đồ cũ sinh viên",
+  "short_name": "UniSeap",
+  "description": "Nền tảng mua bán, trao đổi đồ cũ dành cho sinh viên",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#faf1df",
+  "theme_color": "#fbbf24",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "orientation": "portrait",
+  "categories": ["shopping", "education", "lifestyle"],
+  "lang": "vi-VN",
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "shortcuts": [
+    {
+      "name": "Tìm kiếm sản phẩm",
+      "short_name": "Tìm kiếm",
+      "description": "Tìm kiếm sản phẩm trên UniSeap",
+      "url": "/search",
+      "icons": [{ "src": "/icons/search-icon.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Đăng bài",
+      "short_name": "Đăng bài",
+      "description": "Đăng bài bán sản phẩm",
+      "url": "/post",
+      "icons": [{ "src": "/icons/post-icon.png", "sizes": "192x192" }]
+    }
+  ]
+}
