@@ -1,20 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 import api from "../../config/axios";
-import { User, Product } from "../../types";
 
 export const useDashboardStore = () => {
   // State variables
   const [activeTab, setActiveTab] = useState<
-    "dashboard" | "users" | "products" | "categories" | "settings"
+    "dashboard" | "users" | "categories" | "products" | "settings"
   >("dashboard");
   const [searchTerm, setSearchTerm] = useState("");
-  const [users, setUsers] = useState<User[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
   const [showEditCategoryModal, setShowEditCategoryModal] = useState(false);
   const [currentCategory, setCurrentCategory] = useState<any>(null);
@@ -25,8 +22,6 @@ export const useDashboardStore = () => {
   const [categoryProducts, setCategoryProducts] = useState<any[]>([]);
   const [selectedCategoryName, setSelectedCategoryName] = useState("");
   const [loadingCategoryProducts, setLoadingCategoryProducts] = useState(false);
-
-  const navigate = useNavigate();
 
   // Dashboard stats - these could be fetched from API in the future
   const stats = {
@@ -402,7 +397,7 @@ export const useDashboardStore = () => {
         throw new Error("No authentication token found");
       }
 
-      const response = await api.delete(`api/Category/${categoryId}`, {
+      const response = await api.delete(`api/categories/${categoryId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -421,6 +416,7 @@ export const useDashboardStore = () => {
       setIsLoading(false);
     }
   };
+
   // Return all the state and handlers for use in the Dashboard component
   return {
     // State

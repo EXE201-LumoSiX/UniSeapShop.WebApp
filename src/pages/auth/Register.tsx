@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { Mail, Lock, User, Phone, RefreshCw } from "lucide-react";
 import api from "../../config/axios";
 
-const RegisterPage: React.FC = () => {
+const Register: React.FC = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     fullName: "",
@@ -366,4 +366,4 @@ const RegisterPage: React.FC = () => {
   );
 };
 
-export default RegisterPage;
+export default Register;

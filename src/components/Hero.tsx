@@ -1,29 +1,7 @@
 import React from "react";
-import { ArrowRight, Recycle, DollarSign, Repeat } from "lucide-react";
-import { Product } from "../types";
-import ProductCard from "./ProductCard";
-import Slider from "react-slick";
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
+import { ArrowRight } from "lucide-react";
 
-interface HeroProps {
-  products?: Product[];
-  onProductClick?: (product: Product) => void;
-}
-const Hero: React.FC<HeroProps> = ({
-  products = [],
-  onProductClick = () => {},
-}) => {
-  const settings = {
-    dots: true,
-    infinite: true,
-    slidesToShow: 3,
-    slidesToScroll: 1,
-    autoplay: true,
-    speed: 500,
-    autoplaySpeed: 3000,
-    cssEase: "linear",
-  };
+const Hero: React.FC = () => {
   return (
     <section className="relative bg-gradient-to-l from-amber-100 via-yellow-50 to-orange-100 py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -40,23 +18,6 @@ const Hero: React.FC<HeroProps> = ({
               Đăng Bán Sản Phẩm Của Bạn
             </button>
           </div>
-        </div>
-        <h2 className="text-3xl font-bold text-amber-900 mb-4">
-          Sản phẩm nổi bật
-        </h2>
-        {/* Popular Products */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Slider {...settings}>
-            {products.map((product) => (
-              <div key={product.id} className="px-2">
-                <ProductCard
-                  product={product}
-                  onClick={() => onProductClick(product)}
-                  featured={true}
-                />
-              </div>
-            ))}
-          </Slider>
         </div>
       </div>
     </section>
