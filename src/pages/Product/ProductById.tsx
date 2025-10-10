@@ -9,8 +9,9 @@ interface ProductDetail {
   price: number;
   productImage?: string;
   description?: string;
-  category?: string;
-  stock?: number;
+  categoryName?: string;
+  quantity?: number;
+  supplierName?: string;
 }
 
 const ProductById: React.FC = () => {
@@ -31,19 +32,21 @@ const ProductById: React.FC = () => {
       
       try {
         const response = await api.get(`api/Product/${id}`);
+        console.log("API Response:", response.data);
         
-        if (response.data && response.data.isSuccess) {
+        if (response.data) {
           setProduct({
-            id: response.data.value.id,
-            productName: response.data.value.productName,
-            price: response.data.value.price,
-            productImage: response.data.value.productImage,
-            description: response.data.value.description || 'Không có mô tả chi tiết.',
-            category: response.data.value.category || 'Chưa phân loại',
-            stock: response.data.value.stock || 0
+            id: response.data.id,
+            productName: response.data.productName,
+            price: response.data.price,
+            productImage: response.data.productImage,
+            description: response.data.description || 'Không có mô tả chi tiết.',
+            categoryName: response.data.categoryName || 'Chưa phân loại',
+            quantity: response.data.quantity || 0,
+            supplierName: response.data.supplierName || 'Không xác định'
           });
         } else {
-          throw new Error(response.data.message || 'Không thể tải thông tin sản phẩm');
+          throw new Error('Không thể tải thông tin sản phẩm');
         }
       } catch (err: any) {
         console.error('Error fetching product details:', err);
@@ -79,6 +82,40 @@ const ProductById: React.FC = () => {
 
   const addToCart = () => {
     // Implement add to cart functionality
+    if (!product) return;
+    
+    // Create cart item from product
+    const cartItem = {
+      id: product.id,
+      productName: product.productName,
+      productImage: product.productImage || '',
+      price: product.price,
+      quantity: quantity,
+      category: product.categoryName || '',
+      condition: 'Tốt', // Default value or get from API if available
+      seller: product.supplierName || '',
+      location: 'Hà Nội', // Default value or get from API if available
+    };
+    
+    // Get existing cart from localStorage
+    const existingCart = localStorage.getItem('cart');
+    let cart = existingCart ? JSON.parse(existingCart) : [];
+    
+    // Check if product already exists in cart
+    const existingItemIndex = cart.findIndex((item: any) => item.id === product.id);
+    
+    if (existingItemIndex >= 0) {
+      // Update quantity if product already in cart
+      cart[existingItemIndex].quantity += quantity;
+    } else {
+      // Add new item to cart
+      cart.push(cartItem);
+    }
+    
+    // Save updated cart to localStorage
+    localStorage.setItem('cart', JSON.stringify(cart));
+    
+    // Show success message
     alert(`Đã thêm ${quantity} sản phẩm vào giỏ hàng`);
   };
 
@@ -151,12 +188,16 @@ const ProductById: React.FC = () => {
               <div className="grid grid-cols-2 gap-4 mt-4">
                 <div>
                   <span className="text-gray-600">Danh mục:</span>
-                  <span className="ml-2 text-gray-900">{product.category}</span>
+                  <span className="ml-2 text-gray-900">{product.categoryName}</span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Người bán:</span>
+                  <span className="ml-2 text-gray-900">{product.supplierName}</span>
                 </div>
                 <div>
                   <span className="text-gray-600">Tình trạng:</span>
-                  <span className={`ml-2 ${product.stock && product.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {product.stock && product.stock > 0 ? 'Còn hàng' : 'Hết hàng'}
+                  <span className={`ml-2 ${product.quantity && product.quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {product.quantity && product.quantity > 0 ? 'Còn hàng' : 'Hết hàng'}
                   </span>
                 </div>
               </div>
@@ -196,9 +237,9 @@ const ProductById: React.FC = () => {
             <button
               onClick={addToCart}
               className="w-full bg-amber-600 hover:bg-amber-700 text-white py-3 px-6 rounded-lg font-medium transition-colors duration-200"
-              disabled={!product.stock || product.stock <= 0}
+              disabled={!product.quantity || product.quantity <= 0}
             >
-              {product.stock && product.stock > 0 ? 'Thêm vào giỏ hàng' : 'Hết hàng'}
+              {product.quantity && product.quantity > 0 ? 'Thêm vào giỏ hàng' : 'Hết hàng'}
             </button>
             
             {/* Additional Info */}

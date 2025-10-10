@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import api from '../config/axios';
 import Hero from '../components/Hero';
-import { useNavigate } from 'react-router-dom';
+import { useNavigationHandlers } from "../utils/navigationHandlers";
 import { Heart } from "lucide-react";
-
 
 const Home: React.FC = () => {
   const [products, setProducts] = useState<any[]>([]);
   const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
+  const {
+    handleProductClick,
+  } = useNavigationHandlers();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -47,13 +48,9 @@ const Home: React.FC = () => {
     fetchProducts();
   }, []);
 
-  const handleProductClick = (product: any) => {
-    navigate(`/product/${product.id}`);
-  };
-
   return (
     <div>
-      <Hero products={featuredProducts} onProductClick={handleProductClick} />
+      <Hero />
       
       {isLoading ? (
         <div className="flex justify-center items-center py-20">
@@ -102,7 +99,7 @@ const Home: React.FC = () => {
                   <div
                     key={product.id}
                     className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer group overflow-hidden border border-gray-200"
-                    onClick={() => handleProductClick(product)}
+                    onClick={() => handleProductClick(product.id, product.productName)}
                   >
                     {/* Image */}
                     <div className="relative overflow-hidden">
@@ -113,7 +110,13 @@ const Home: React.FC = () => {
                       />
 
                       {/* Wishlist */}
-                      <button className="absolute top-3 right-3 p-2 rounded-full bg-white/80 hover:bg-white transition-colors duration-200 group">
+                      <button 
+                        className="absolute top-3 right-3 p-2 rounded-full bg-white/80 hover:bg-white transition-colors duration-200 group"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent triggering the parent onClick
+                          // Add wishlist functionality here
+                        }}
+                      >
                         <Heart className="h-4 w-4 text-gray-600 group-hover:text-red-500" />
                       </button>
                     </div>

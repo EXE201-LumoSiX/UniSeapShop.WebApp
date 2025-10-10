@@ -4,10 +4,11 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Layout from "./components/Layout/Layout";
 
 // import pages
-import Login from "./pages/Auth/Login";
 import Home from "./pages/Home";
-import RegisterPage from "./pages/Auth/Register";
+import Register from "./pages/Auth/Register";
+import Login from "./pages/Auth/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Unauthorized from "./pages/Auth/Unauthorized";
 import Admin from "./pages/Admin/Dashboard";
 import Profile from "./pages/User/Profile";
 import ProductByCategory from "./pages/Product/ProductByCategory";
@@ -15,7 +16,7 @@ import Cart from "./pages/User/Cart";
 import Payment from "./pages/Payment/Payment";
 import SellItem from "./pages/Suplier/Sell";
 import ProductById from "./pages/Product/ProductById";
-import Unauthorized from "./pages/Auth/Unauthorized";
+
 
 const App: React.FC = () => {
   const handleLogin = () => {
@@ -39,7 +40,7 @@ const App: React.FC = () => {
             </Layout>
           }
         />
-        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/register" element={<Register />} />
         <Route
           path="/category/:categoryName"
           element={
@@ -49,7 +50,7 @@ const App: React.FC = () => {
           }
         />
         <Route
-          path="/product/:id"
+          path="/product/:productName"
           element={
             <Layout>
               <ProductById />
