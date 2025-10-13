@@ -43,6 +43,8 @@ const SellItem: React.FC = () => {
         supplierId: userIdFromStorage
       }));
     }
+
+
     
     // Lấy danh sách danh mục
     const fetchCategories = async () => {
