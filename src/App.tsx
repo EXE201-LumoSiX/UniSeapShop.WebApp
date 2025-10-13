@@ -16,7 +16,7 @@ import Cart from "./pages/User/Cart";
 import SellItem from "./pages/Suplier/Sell";
 import ProductById from "./pages/Product/ProductById";
 import Order from "./pages/Payment/Order";
-
+import OrderSuccess from "./pages/Payment/OrderSucces";
 
 const App: React.FC = () => {
   const handleLogin = () => {
@@ -31,6 +31,7 @@ const App: React.FC = () => {
 
         <Route path="/cart" element={<Cart />} />
         <Route path="/orderdetail" element={<Order />} />
+        <Route path="/order-success" element={<OrderSuccess />} />
         {/* Public routes */}
         <Route
           path="/"

@@ -1,7 +1,7 @@
 
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
-const API_URL = 'https://localhost:44372/'; 
+const API_URL = 'https://uniseapshop.fpt-devteam.fun/'; 
 
 const api = axios.create({
   baseURL: API_URL,

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, User, Menu, X, ChevronDown, ShoppingCart } from "lucide-react";
-import logoImage from "../../assets/images/logo _uniseap.png";
+import logoImage from "../../assets/images/logo_uniseap.png";
 import { useNavigationHandlers } from "../../utils/navigationHandlers";
 import api from "../../config/axios";
 import { useDispatch, useSelector } from "react-redux";
