@@ -4,17 +4,19 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Layout from "./components/Layout/Layout";
 
 // import pages
-import Login from "./pages/auth/Login";
 import Home from "./pages/Home";
-import RegisterPage from "./pages/auth/register";
+import Register from "./pages/Auth/Register";
+import Login from "./pages/Auth/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Unauthorized from "./pages/Auth/Unauthorized";
 import Admin from "./pages/Admin/Dashboard";
 import Profile from "./pages/User/Profile";
-import ProductByCategory from "./pages/ProductByCategory";
+import ProductByCategory from "./pages/Product/ProductByCategory";
 import Cart from "./pages/User/Cart";
 import Payment from "./pages/Payment/Payment";
 import SellItem from "./pages/Suplier/Sell";
-import SellPage from "./pages/Suplier/SellPage";
+import ProductById from "./pages/Product/ProductById";
+
 
 const App: React.FC = () => {
   const handleLogin = () => {
@@ -25,11 +27,10 @@ const App: React.FC = () => {
     <Router>
       <Routes>
         <Route path="/login" element={<Login onLogin={handleLogin} />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/category/:categoryName" element={<ProductByCategory />} />
+        <Route path="/unauthorized" element={<Unauthorized />} />
+
         <Route path="/cart" element={<Cart />} />
         <Route path="/payment" element={<Payment />} />
-        <Route path="/sell" element={<SellPage />} />
         {/* Public routes */}
         <Route
           path="/"
@@ -39,18 +40,50 @@ const App: React.FC = () => {
             </Layout>
           }
         />
-        {/* Routes cho Admin */}
-        <Route path="/dashboard" element={<Admin />} />
-        {/* Routes cho Buyer */}
+        <Route path="/register" element={<Register />} />
         <Route
-          path="/profile"
+          path="/category/:categoryName"
           element={
             <Layout>
-              <Profile />
+              <ProductByCategory />
             </Layout>
           }
         />
+        <Route
+          path="/product/:productName"
+          element={
+            <Layout>
+              <ProductById />
+            </Layout>
+          }
+        />
+        {/* Routes cho Admin */}
+        <Route element={<ProtectedRoute allowedRoles={["Admin"]} />}>
+          <Route path="/dashboard" element={<Admin />} />
+        </Route>
+        {/* Routes cho Buyer */}
+        <Route element={<ProtectedRoute allowedRoles={["User"]} />}>
+          <Route
+            path="/profile"
+            element={
+              <Layout>
+                <Profile />
+              </Layout>
+            }
+          />
+        </Route>
+
         {/* Routes cho Seller */}
+        <Route element={<ProtectedRoute allowedRoles={["Suplier"]} />}>
+          <Route
+            path="/sell"
+            element={
+              <Layout>
+                <SellItem />
+              </Layout>
+            }
+          />
+        </Route>
       </Routes>
     </Router>
   );

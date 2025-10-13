@@ -6,7 +6,6 @@ import {
   Camera,
   Mail,
   Phone,
-  Shield,
 } from "lucide-react";
 import api from "../../config/axios";
 
@@ -132,8 +131,6 @@ const Profile: React.FC = () => {
         throw new Error(response.data.message || "Failed to update profile");
       }
     } catch (error) {
-      console.error("Error updating profile:", error);
-      // You could set an error state here to show to the user
       setError(
         error.response?.data?.error?.message ||
           "Không thể cập nhật thông tin người dùng. Vui lòng thử lại sau."
@@ -194,7 +191,6 @@ const Profile: React.FC = () => {
         throw new Error(response.data.message || "Failed to upload avatar");
       }
     } catch (error) {
-      console.error("Error uploading avatar:", error);
       setError(
         error.response?.data?.error?.message ||
           "Không thể cập nhật ảnh đại diện. Vui lòng thử lại sau."

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useDashboardStore } from "./DashboardStore";
 import { useNavigationHandlers } from "../../utils/navigationHandlers";
 import {
@@ -17,6 +17,7 @@ import {
   ListTree,
   X,
 } from "lucide-react";
+import api from "../../config/axios";
 
 const Admin: React.FC = () => {
   const {
@@ -53,20 +54,28 @@ const Admin: React.FC = () => {
 
   const { handleLogout } = useNavigationHandlers();
 
+  const [localCategories, setLocalCategories] = useState<
+    { id: string; categoryName: string }[]
+  >([]);
+
   // Mock products for demonstration (can be removed once API integration is complete)
-  const mockProducts = [
-    {
-      id: 1,
-      productName: "Laptop Dell XPS 13",
-      productImage: "https://via.placeholder.com/300x200?text=Dell+XPS+13",
-      price: 25000000,
-      condition: "Excellent",
-      category: "Laptops",
-      seller: "John Doe",
-      postedDate: "2023-05-15",
-    },
-    // Add more mock products as needed
-  ];
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await api.get("/api/categories");
+        setLocalCategories(response.data);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  const getCategoryName = (categoryId: string) => {
+    const category = categories.find((cat) => cat.id === categoryId);
+    return category ? category.categoryName : "Unknown";
+  };
 
   const renderDashboard = () => (
     <div className="space-y-6">
@@ -309,94 +318,7 @@ const Admin: React.FC = () => {
       </div>
     </div>
   );
-  const renderProducts = () => (
-    <div className="space-y-6">
-      {/* Search and Actions */}
-      <div className="bg-white rounded-xl shadow-md p-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Tìm kiếm sản phẩm..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
-            />
-          </div>
-          <div className="flex space-x-2">
-            <button className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2">
-              <Plus className="h-4 w-4" />
-              <span>Thêm sản phẩm</span>
-            </button>
-            <button className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg flex items-center space-x-2">
-              <Filter className="h-4 w-4" />
-              <span>Lọc</span>
-            </button>
-          </div>
-        </div>
-      </div>
 
-      {/* Products Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {mockProducts.map((product) => (
-          <div
-            key={product.id}
-            className="bg-white rounded-xl shadow-md overflow-hidden"
-          >
-            <img
-              src={product.productImage}
-              alt={product.productName}
-              className="w-full h-48 object-cover"
-            />
-            <div className="p-4">
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="font-semibold text-gray-900 line-clamp-2">
-                  {product.productName}
-                </h3>
-                <span
-                  className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    product.condition === "Excellent"
-                      ? "bg-green-100 text-green-800"
-                      : product.condition === "Good"
-                      ? "bg-yellow-100 text-yellow-800"
-                      : "bg-orange-100 text-orange-800"
-                  }`}
-                >
-                  {product.condition}
-                </span>
-              </div>
-
-              <p className="text-sm text-gray-600 mb-2">{product.category}</p>
-              <p className="text-lg font-bold text-amber-800 mb-2">
-                {product.price.toLocaleString()} VNĐ
-              </p>
-
-              <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
-                <span>Người bán: {product.seller}</span>
-                <span>{product.postedDate}</span>
-              </div>
-
-              <div className="flex space-x-2">
-                <button className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-3 rounded-lg text-sm">
-                  Duyệt
-                </button>
-                <button className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 px-3 rounded-lg text-sm">
-                  Từ chối
-                </button>
-                <button className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg">
-                  <Edit className="h-4 w-4 text-gray-600" />
-                </button>
-                <button className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg">
-                  <Trash2 className="h-4 w-4 text-gray-600" />
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
   const renderCategories = () => (
     <div className="space-y-6">
       {/* Search and Actions */}
@@ -715,6 +637,99 @@ const Admin: React.FC = () => {
     </div>
   );
 
+  const renderProducts = () => (
+    <div className="space-y-6">
+      {/* Search and Actions */}
+      <div className="bg-white rounded-xl shadow-md p-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Tìm kiếm sản phẩm..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+            />
+          </div>
+          <div className="flex space-x-2">
+            <button className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg flex items-center space-x-2">
+              <Filter className="h-4 w-4" />
+              <span>Lọc</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {products.map((product) => (
+          <div
+            key={product.id}
+            className="bg-white rounded-xl shadow-md overflow-hidden"
+          >
+            <img
+              src={
+                product.productImage ||
+                "https://via.placeholder.com/300x200?text=No+Image"
+              }
+              alt={product.productName}
+              className="w-full h-48 object-cover"
+            />
+            <div className="p-4">
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="font-semibold text-gray-900 line-clamp-2">
+                  {product.productName}
+                </h3>
+                <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  {product.usageHistory || "N/A"}
+                </span>
+              </div>
+
+              <p className="text-sm text-gray-600 mb-2">ID: {product.id}</p>
+              <p className="text-sm text-gray-600 mb-2">
+                Danh mục: {getCategoryName(product.categoryId)}
+              </p>
+              <p className="text-lg font-bold text-amber-800 mb-2">
+                {product.price.toLocaleString()} VNĐ
+              </p>
+              <p className="text-sm text-gray-600 mb-2">
+                Quantity: {product.quantity}
+              </p>
+              <p className="text-sm text-gray-600 mb-2">
+                Người bán: {product.supplierId?.userId?.fullName || "N/A"}
+              </p>
+
+              <div className="text-sm text-gray-600 mb-4 line-clamp-3">
+                Mô tả: {product.description}
+              </div>
+
+              <div className="flex space-x-2">
+                {/* <button
+                  onClick={() => handleProductAction(product.id, "approve")}
+                  className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-3 rounded-lg text-sm"
+                >
+                  Duyệt
+                </button>
+                <button
+                  onClick={() => handleProductAction(product.id, "reject")}
+                  className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 px-3 rounded-lg text-sm"
+                >
+                  Từ chối
+                </button> */}
+                <button
+                  onClick={() => handleProductAction(product.id, "delete")}
+                  className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg"
+                >
+                  <Trash2 className="h-4 w-4 text-gray-600" />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   const renderSettings = () => (
     <div className="space-y-6">
       <div className="bg-white rounded-xl shadow-md p-6">
@@ -807,18 +822,6 @@ const Admin: React.FC = () => {
                   <Users className="h-5 w-5" />
                   <span>Quản lý người dùng</span>
                 </button>
-
-                <button
-                  onClick={() => setActiveTab("products")}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors duration-200 ${
-                    activeTab === "products"
-                      ? "bg-yellow-100 text-yellow-800"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  <Package className="h-5 w-5" />
-                  <span>Quản lý sản phẩm</span>
-                </button>
                 <button
                   onClick={() => setActiveTab("categories")}
                   className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors duration-200 ${
@@ -829,6 +832,17 @@ const Admin: React.FC = () => {
                 >
                   <ListTree className="h-5 w-5" />
                   <span>Quản lý danh mục</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab("products")}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors duration-200 ${
+                    activeTab === "products"
+                      ? "bg-yellow-100 text-yellow-800"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  <Package className="h-5 w-5" />
+                  <span>Quản lý sản phẩm</span>
                 </button>
                 <button
                   onClick={() => setActiveTab("settings")}
@@ -849,8 +863,8 @@ const Admin: React.FC = () => {
           <div className="flex-1">
             {activeTab === "dashboard" && renderDashboard()}
             {activeTab === "users" && renderUsers()}
-            {activeTab === "products" && renderProducts()}
             {activeTab === "categories" && renderCategories()}
+            {activeTab === "products" && renderProducts()}
             {activeTab === "settings" && renderSettings()}
           </div>
         </div>

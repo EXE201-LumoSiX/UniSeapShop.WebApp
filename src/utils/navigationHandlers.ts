@@ -43,6 +43,16 @@ export const useNavigationHandlers = () => {
     navigate(`/category/${urlFriendlyName}`, { state: { categoryId } });
   };
 
+  const handleProductClick = (productId: string, productName: string) => {
+    // Convert product name to URL-friendly format: lowercase, no spaces, no diacritics
+    const urlFriendlyName = removeDiacritics(productName)
+      .toLowerCase()
+      .replace(/\s+/g, '');
+
+    // Navigate to the ProductById page with the URL-friendly product name
+    navigate(`/product/${urlFriendlyName}`, { state: { productId } });
+  };
+
   const handleCartClick = () => {
     navigate("/cart");
   };
@@ -65,6 +75,7 @@ export const useNavigationHandlers = () => {
     handleSell,
     handleLogout,
     handleCategoryClick,
+    handleProductClick,
     handleCartClick,
     goToHome,
     goToUserProfile,
@@ -100,6 +111,10 @@ export const navigationHandlers = {
   },
 
   handleCategoryClick: (navigate: NavigateFunction, path: string) => {
+    navigate(path);
+  },
+
+  handleProductClick: (navigate: NavigateFunction, path: string) => {
     navigate(path);
   },
 
