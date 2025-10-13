@@ -43,14 +43,8 @@ export const useNavigationHandlers = () => {
     navigate(`/category/${urlFriendlyName}`, { state: { categoryId } });
   };
 
-  const handleProductClick = (productId: string, productName: string) => {
-    // Convert product name to URL-friendly format: lowercase, no spaces, no diacritics
-    const urlFriendlyName = removeDiacritics(productName)
-      .toLowerCase()
-      .replace(/\s+/g, '');
-
-    // Navigate to the ProductById page with the URL-friendly product name
-    navigate(`/product/${urlFriendlyName}`, { state: { productId } });
+  const handleProductClick = (productId: string) => {
+    navigate(`/product/${productId}`);
   };
 
   const handleCartClick = () => {

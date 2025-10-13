@@ -13,9 +13,9 @@ import Admin from "./pages/Admin/Dashboard";
 import Profile from "./pages/User/Profile";
 import ProductByCategory from "./pages/Product/ProductByCategory";
 import Cart from "./pages/User/Cart";
-import Payment from "./pages/Payment/Payment";
 import SellItem from "./pages/Suplier/Sell";
 import ProductById from "./pages/Product/ProductById";
+import Order from "./pages/Payment/Order";
 
 
 const App: React.FC = () => {
@@ -30,7 +30,7 @@ const App: React.FC = () => {
         <Route path="/unauthorized" element={<Unauthorized />} />
 
         <Route path="/cart" element={<Cart />} />
-        <Route path="/payment" element={<Payment />} />
+        <Route path="/orderdetail" element={<Order />} />
         {/* Public routes */}
         <Route
           path="/"
@@ -50,7 +50,7 @@ const App: React.FC = () => {
           }
         />
         <Route
-          path="/product/:productName"
+          path="/product/:id"
           element={
             <Layout>
               <ProductById />

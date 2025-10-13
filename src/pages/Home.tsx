@@ -99,7 +99,7 @@ const Home: React.FC = () => {
                   <div
                     key={product.id}
                     className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer group overflow-hidden border border-gray-200"
-                    onClick={() => handleProductClick(product.id, product.productName)}
+                    onClick={() => handleProductClick(product.id)}
                   >
                     {/* Image */}
                     <div className="relative overflow-hidden">

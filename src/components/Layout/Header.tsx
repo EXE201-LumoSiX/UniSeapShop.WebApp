@@ -4,8 +4,10 @@ import { Search, User, Menu, X, ChevronDown, ShoppingCart } from "lucide-react";
 import logoImage from "../../assets/images/logo _uniseap.png";
 import { useNavigationHandlers } from "../../utils/navigationHandlers";
 import api from "../../config/axios";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { selectCartItemsCount } from "../../redux/feature/cartSlice";
+import { AppDispatch } from "../../redux/store";
+import { fetchCartItems } from "../../redux/feature/cartActions";
 
 const Header: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -16,6 +18,7 @@ const Header: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [categories, setCategories] = useState<any[]>([]);
   const cartItemsCount = useSelector(selectCartItemsCount);
+  const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
   const {
@@ -49,6 +52,27 @@ const Header: React.FC = () => {
       window.removeEventListener("loginStateChange", handleLoginStateChange);
     };
   }, []);
+
+    useEffect(() => {
+    // Initial cart fetch when component mounts
+    if (isLoggedIn) {
+      dispatch(fetchCartItems());
+    }
+    
+    // Listen for cart update events
+    const handleCartUpdate = () => {
+      if (isLoggedIn) {
+        dispatch(fetchCartItems());
+      }
+    };
+    
+    window.addEventListener('cartUpdated', handleCartUpdate);
+    
+    // Clean up event listener
+    return () => {
+      window.removeEventListener('cartUpdated', handleCartUpdate);
+    };
+  }, [dispatch, isLoggedIn]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
