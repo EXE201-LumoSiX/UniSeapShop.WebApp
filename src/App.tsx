@@ -20,7 +20,7 @@ import OrderSuccess from "./pages/Payment/OrderSucces";
 
 const App: React.FC = () => {
   const handleLogin = () => {
-    console.log("User logged in");
+    console.log("User logged in t");
   };
 
   return (
