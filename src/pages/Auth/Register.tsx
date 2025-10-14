@@ -96,7 +96,7 @@ const Register: React.FC = () => {
       if (error.response && error.response.data) {
         setErrors({
           form:
-            error.response.data.message ||
+            error.response.data.error.message ||
             "Đăng ký thất bại. Vui lòng thử lại.",
         });
       } else {

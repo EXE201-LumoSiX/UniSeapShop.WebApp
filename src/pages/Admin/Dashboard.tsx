@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useDashboardStore } from "./DashboardStore";
 import { useNavigationHandlers } from "../../utils/navigationHandlers";
 import {
@@ -9,15 +9,18 @@ import {
   Search,
   Filter,
   Plus,
-  UserCheck,
-  UserX,
   Trash2,
   Eye,
   Edit,
   ListTree,
   X,
+  User,
+  Mail,
+  Phone,
+  Truck,
+  CheckCircle,
 } from "lucide-react";
-import api from "../../config/axios";
+
 
 const Admin: React.FC = () => {
   const {
@@ -44,7 +47,12 @@ const Admin: React.FC = () => {
     categoryProducts,
     selectedCategoryName,
     loadingCategoryProducts,
+    showUserDetailsModal,
+    setShowUserDetailsModal,
+    selectedUser,
+    loadingUserDetails,
     handleUserAction,
+    handleViewUserDetails,
     handleProductAction,
     handleViewCategoryDetails,
     handleAddCategory,
@@ -53,29 +61,6 @@ const Admin: React.FC = () => {
   } = useDashboardStore();
 
   const { handleLogout } = useNavigationHandlers();
-
-  const [localCategories, setLocalCategories] = useState<
-    { id: string; categoryName: string }[]
-  >([]);
-
-  // Mock products for demonstration (can be removed once API integration is complete)
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await api.get("/api/categories");
-        setLocalCategories(response.data);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-      }
-    };
-
-    fetchCategories();
-  }, []);
-
-  const getCategoryName = (categoryId: string) => {
-    const category = categories.find((cat) => cat.id === categoryId);
-    return category ? category.categoryName : "Unknown";
-  };
 
   const renderDashboard = () => (
     <div className="space-y-6">
@@ -165,9 +150,9 @@ const Admin: React.FC = () => {
           </div>
           <div className="flex space-x-2">
             {/* <button className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2">
-              <Plus className="h-4 w-4" />
-              <span>Thêm người dùng</span>
-            </button> */}
+            <Plus className="h-4 w-4" />
+            <span>Thêm người dùng</span>
+          </button> */}
             <button className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg flex items-center space-x-2">
               <Filter className="h-4 w-4" />
               <span>Lọc</span>
@@ -205,23 +190,17 @@ const Admin: React.FC = () => {
                     Người dùng
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Email
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Địa chỉ
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Vai trò
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Hành động
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Trạng thái
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {users.length > 0 ? (
                   users.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50">
+                    <tr key={user.userId} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <input type="checkbox" className="rounded" />
                       </td>
@@ -229,73 +208,41 @@ const Admin: React.FC = () => {
                         <div className="flex items-center">
                           <img
                             src={
-                              user.avatar ||
+                              user.userImage ||
                               "https://via.placeholder.com/100?text=User"
                             }
-                            alt={user.fullName}
+                            alt={user.username}
                             className="w-10 h-10 rounded-full mr-3"
                           />
                           <div>
                             <div className="text-sm font-medium text-gray-900">
-                              {user.fullName}
+                              {user.username}
                             </div>
                             <div className="text-sm text-gray-500">
-                              ID: {user.id}
+                              ID: {user.userId}
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {user.email}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {user.location || "N/A"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            user.role === "Admin"
-                              ? "bg-purple-100 text-purple-800"
-                              : user.role === "Supplier"
-                              ? "bg-blue-100 text-blue-800"
-                              : "bg-green-100 text-green-800"
-                          }`}
-                        >
-                          {user.role}
-                        </span>
-                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center space-x-2">
                           <button
-                            onClick={() =>
-                              handleUserAction(user.id, "activate")
-                            }
-                            className="p-1 bg-green-100 text-green-600 rounded hover:bg-green-200"
-                            title="Kích hoạt"
-                          >
-                            <UserCheck className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() =>
-                              handleUserAction(user.id, "deactivate")
-                            }
-                            className="p-1 bg-red-100 text-red-600 rounded hover:bg-red-200"
-                            title="Vô hiệu hóa"
-                          >
-                            <UserX className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => handleUserAction(user.id, "delete")}
-                            className="p-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200"
-                            title="Xóa"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                          <button
+                            onClick={() => handleViewUserDetails(user.userId)}
                             className="p-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200"
                             title="Xem chi tiết"
                           >
                             <Eye className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (window.confirm("Chắc chắn xóa?")) {
+                                handleUserAction(user.userId, "delete");
+                              }
+                            }}
+                            className="p-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200"
+                            title="Xóa"
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
                       </td>
@@ -316,6 +263,90 @@ const Admin: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* User Details Modal */}
+      {showUserDetailsModal && selectedUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-900">
+                Thông tin người dùng
+              </h3>
+              <button
+                onClick={() => setShowUserDetailsModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {loadingUserDetails ? (
+              <div className="py-8 text-center">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-yellow-500 border-t-transparent"></div>
+                <p className="mt-2 text-gray-600">Đang tải thông tin...</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="flex flex-col items-center mb-6">
+                  <img
+                    src={
+                      selectedUser.userImage ||
+                      "https://via.placeholder.com/150?text=User"
+                    }
+                    alt={selectedUser.username}
+                    className="w-24 h-24 rounded-full object-cover border-4 border-yellow-100 mb-3"
+                  />
+                  <h4 className="text-lg font-semibold text-gray-900">
+                    {selectedUser.username}
+                  </h4>
+                  <span className="px-3 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
+                    {selectedUser.roleName || "Người dùng"}
+                  </span>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-start">
+                    <User className="h-5 w-5 text-gray-500 mr-3 mt-0.5" />
+                    <div>
+                      <p className="text-sm text-gray-500">ID người dùng</p>
+                      <p className="text-gray-900">{selectedUser.userId}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start">
+                    <Mail className="h-5 w-5 text-gray-500 mr-3 mt-0.5" />
+                    <div>
+                      <p className="text-sm text-gray-500">Email</p>
+                      <p className="text-gray-900">{selectedUser.email}</p>
+                    </div>
+                  </div>
+
+                  {selectedUser.phoneNumber && (
+                    <div className="flex items-start">
+                      <Phone className="h-5 w-5 text-gray-500 mr-3 mt-0.5" />
+                      <div>
+                        <p className="text-sm text-gray-500">Số điện thoại</p>
+                        <p className="text-gray-900">
+                          {selectedUser.phoneNumber}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-4 border-t border-gray-200 flex justify-end">
+                  <button
+                    onClick={() => setShowUserDetailsModal(false)}
+                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                  >
+                    Đóng
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -681,13 +712,12 @@ const Admin: React.FC = () => {
                   {product.productName}
                 </h3>
                 <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  {product.usageHistory || "N/A"}
+                  {product.productCondition || "N/A"}
                 </span>
               </div>
-
               <p className="text-sm text-gray-600 mb-2">ID: {product.id}</p>
               <p className="text-sm text-gray-600 mb-2">
-                Danh mục: {getCategoryName(product.categoryId)}
+                Danh mục: {product.categoryName}
               </p>
               <p className="text-lg font-bold text-amber-800 mb-2">
                 {product.price.toLocaleString()} VNĐ
@@ -696,26 +726,12 @@ const Admin: React.FC = () => {
                 Quantity: {product.quantity}
               </p>
               <p className="text-sm text-gray-600 mb-2">
-                Người bán: {product.supplierId?.userId?.fullName || "N/A"}
+                Người bán: {product.supplierName || "N/A"}
               </p>
-
               <div className="text-sm text-gray-600 mb-4 line-clamp-3">
                 Mô tả: {product.description}
               </div>
-
               <div className="flex space-x-2">
-                {/* <button
-                  onClick={() => handleProductAction(product.id, "approve")}
-                  className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-3 rounded-lg text-sm"
-                >
-                  Duyệt
-                </button>
-                <button
-                  onClick={() => handleProductAction(product.id, "reject")}
-                  className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 px-3 rounded-lg text-sm"
-                >
-                  Từ chối
-                </button> */}
                 <button
                   onClick={() => handleProductAction(product.id, "delete")}
                   className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg"
@@ -729,6 +745,203 @@ const Admin: React.FC = () => {
       </div>
     </div>
   );
+
+  const renderOrders = () => (
+  <div className="space-y-6">
+    {/* Search and Filters */}
+    <div className="bg-white rounded-xl shadow-md p-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Tìm kiếm đơn hàng..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+          />
+        </div>
+        <div className="flex space-x-2">
+          <select
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+          >
+            <option value="all">Tất cả trạng thái</option>
+            <option value="pending">Chờ xác nhận</option>
+            <option value="approved">Đã xác nhận</option>
+            <option value="processing">Đang xử lý</option>
+            <option value="shipped">Đang giao hàng</option>
+            <option value="delivered">Đã giao hàng</option>
+            <option value="cancelled">Đã hủy</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    {/* Orders Table */}
+    <div className="bg-white rounded-xl shadow-md overflow-hidden">
+      {isLoading ? (
+        <div className="p-8 text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-yellow-500 border-t-transparent"></div>
+          <p className="mt-2 text-gray-600">Đang tải dữ liệu...</p>
+        </div>
+      ) : error ? (
+        <div className="p-8 text-center text-red-500">
+          <p>{error}</p>
+          <button
+            onClick={() => setActiveTab("orders")}
+            className="mt-2 text-yellow-600 hover:underline"
+          >
+            Thử lại
+          </button>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Mã đơn hàng
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Khách hàng
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Ngày đặt
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Tổng tiền
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Trạng thái
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Hành động
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {/* Sample order data - replace with actual data from your store */}
+              <tr className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
+                  #ORD12345
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm font-medium text-gray-900">
+                    Nguyễn Văn A
+                  </div>
+                  <div className="text-sm text-gray-500">nguyenvana@gmail.com</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  15/05/2023
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  1,250,000 VNĐ
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                    Chờ xác nhận
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <div className="flex items-center space-x-2">
+                    <button
+                      className="p-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200"
+                      title="Xem chi tiết"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
+                    <button
+                      className="p-1 bg-green-100 text-green-600 rounded hover:bg-green-200"
+                      title="Xác nhận"
+                    >
+                      <CheckCircle className="h-4 w-4" />
+                    </button>
+                    <button
+                      className="p-1 bg-red-100 text-red-600 rounded hover:bg-red-200"
+                      title="Từ chối"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
+                  #ORD12346
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm font-medium text-gray-900">
+                    Trần Thị B
+                  </div>
+                  <div className="text-sm text-gray-500">tranthib@gmail.com</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  14/05/2023
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  850,000 VNĐ
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                    Đang giao hàng
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <div className="flex items-center space-x-2">
+                    <button
+                      className="p-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200"
+                      title="Xem chi tiết"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
+                    <button
+                      className="p-1 bg-green-100 text-green-600 rounded hover:bg-green-200"
+                      title="Đánh dấu đã giao"
+                    >
+                      <Truck className="h-4 w-4" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
+                  #ORD12347
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm font-medium text-gray-900">
+                    Lê Văn C
+                  </div>
+                  <div className="text-sm text-gray-500">levanc@gmail.com</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  13/05/2023
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  2,100,000 VNĐ
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                    Đã giao hàng
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <div className="flex items-center space-x-2">
+                    <button
+                      className="p-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200"
+                      title="Xem chi tiết"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  </div>
+);
 
   const renderSettings = () => (
     <div className="space-y-6">
@@ -781,19 +994,19 @@ const Admin: React.FC = () => {
               onClick={handleLogout}
               className="text-2xl font-bold text-amber-900"
             >
-              Logout
+              Đăng xuất
             </button>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">Xin chào, Admin</span>
               <div className="w-8 h-8 bg-amber-200 rounded-full flex items-center justify-center">
-                <span className="text-amber-800 font-semibold">A</span>
+                <span className="text-amber-800 font-semibold">T</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar */}
           <div className="lg:w-64">
@@ -845,6 +1058,28 @@ const Admin: React.FC = () => {
                   <span>Quản lý sản phẩm</span>
                 </button>
                 <button
+                  onClick={() => setActiveTab("orders")}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors duration-200 ${
+                    activeTab === "orders"
+                      ? "bg-yellow-100 text-yellow-800"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  <Package className="h-5 w-5" />
+                  <span>Quản lý đơn hàng</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab("payments")}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors duration-200 ${
+                    activeTab === "payments"
+                      ? "bg-yellow-100 text-yellow-800"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  <Package className="h-5 w-5" />
+                  <span>Quản lý thanh toán</span>
+                </button>
+                <button
                   onClick={() => setActiveTab("settings")}
                   className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors duration-200 ${
                     activeTab === "settings"
@@ -865,6 +1100,8 @@ const Admin: React.FC = () => {
             {activeTab === "users" && renderUsers()}
             {activeTab === "categories" && renderCategories()}
             {activeTab === "products" && renderProducts()}
+            {activeTab === "orders" && renderOrders()}
+            {activeTab === "payments" && renderPayments()}
             {activeTab === "settings" && renderSettings()}
           </div>
         </div>

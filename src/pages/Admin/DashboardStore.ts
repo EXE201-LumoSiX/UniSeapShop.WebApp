@@ -4,12 +4,19 @@ import api from "../../config/axios";
 export const useDashboardStore = () => {
   // State variables
   const [activeTab, setActiveTab] = useState<
-    "dashboard" | "users" | "categories" | "products" | "settings"
+    | "dashboard"
+    | "users"
+    | "categories"
+    | "products"
+    | "orders"
+    | "payments"
+    | "settings"
   >("dashboard");
   const [searchTerm, setSearchTerm] = useState("");
   const [users, setUsers] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
@@ -22,6 +29,12 @@ export const useDashboardStore = () => {
   const [categoryProducts, setCategoryProducts] = useState<any[]>([]);
   const [selectedCategoryName, setSelectedCategoryName] = useState("");
   const [loadingCategoryProducts, setLoadingCategoryProducts] = useState(false);
+  const [showUserDetailsModal, setShowUserDetailsModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [loadingUserDetails, setLoadingUserDetails] = useState(false);
+  const [showOrderDetailsModal, setShowOrderDetailsModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [loadingOrderDetails, setLoadingOrderDetails] = useState(false);
 
   // Dashboard stats - these could be fetched from API in the future
   const stats = {
@@ -138,14 +151,49 @@ export const useDashboardStore = () => {
     fetchProducts();
   }, [activeTab]);
 
-  // Fetch categories from API - now using the reusable function
+  // Fetch categories from API
   useEffect(() => {
     fetchCategories();
   }, [activeTab, shouldRefetchCategories, fetchCategories]);
 
+  // Fetch orders from API
+  useEffect(() => {
+    const fetchOrders = async () => {
+      if (activeTab === "orders") {
+        setIsLoading(true);
+        setError(null);
+        try {
+          const token = localStorage.getItem("token");
+          if (!token) {
+            throw new Error("No authentication token found");
+          }
+
+          const response = await api.get("api/orders", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (response.data && response.data.isSuccess) {
+            setOrders(response.data.value.data || []);
+          } else {
+            throw new Error(response.data.message || "Failed to fetch orders");
+          }
+        } catch (err) {
+          console.error("Error fetching orders:", err);
+          setError("Failed to load orders. Please try again later.");
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchOrders();
+  }, [activeTab]);
+
   // User actions (activate, deactivate, delete)
   const handleUserAction = async (
-    userId: number,
+    userId: string,
     action: "activate" | "deactivate" | "delete"
   ) => {
     try {
@@ -155,10 +203,6 @@ export const useDashboardStore = () => {
       }
 
       if (action === "delete") {
-        if (!confirm("Are you sure you want to delete this user?")) {
-          return;
-        }
-
         const response = await api.delete(`api/User/${userId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -167,8 +211,11 @@ export const useDashboardStore = () => {
 
         if (response.data && response.data.isSuccess) {
           setUsers(users.filter((user) => user.id !== userId));
+          alert("Xóa người dùng thành công!");
         } else {
-          throw new Error(response.data.message || "Failed to delete user");
+          throw new Error(
+            response.data.error.message || "Failed to delete user"
+          );
         }
       } else {
         // For activate/deactivate, we would typically use a PATCH or PUT request
@@ -197,6 +244,39 @@ export const useDashboardStore = () => {
     } catch (err) {
       console.error(`Error performing ${action} on user:`, err);
       alert(`Failed to ${action} user. Please try again.`);
+    }
+  };
+  const handleViewUserDetails = async (userId: string) => {
+    if (!userId) {
+      alert("Invalid user ID");
+      return;
+    }
+    setLoadingUserDetails(true);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      const response = await api.get(`api/User/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.data && response.data.isSuccess) {
+        setSelectedUser(response.data.value.data);
+        setShowUserDetailsModal(true);
+      } else {
+        throw new Error(
+          response.data.message || "Failed to fetch user details"
+        );
+      }
+    } catch (err) {
+      console.error("Error fetching user details:", err);
+      alert("Không thể tải thông tin người dùng. Vui lòng thử lại sau.");
+    } finally {
+      setLoadingUserDetails(false);
     }
   };
 
@@ -291,7 +371,6 @@ export const useDashboardStore = () => {
       setLoadingCategoryProducts(false);
     }
   };
-
   const handleAddCategory = async () => {
     if (!newCategory.name.trim()) {
       alert("Category name is required");
@@ -331,7 +410,6 @@ export const useDashboardStore = () => {
       setIsLoading(false);
     }
   };
-
   const handleEditCategory = async () => {
     if (!currentCategory || !currentCategory.categoryName?.trim()) {
       alert("Category name is required");
@@ -384,7 +462,6 @@ export const useDashboardStore = () => {
       setIsLoading(false);
     }
   };
-
   const handleDeleteCategory = async (categoryId: number) => {
     if (!confirm("Are you sure you want to delete this category?")) {
       return;
@@ -417,6 +494,41 @@ export const useDashboardStore = () => {
     }
   };
 
+  // Order actions (view details, update status)
+  const handleViewOrderDetails = async (orderId: string) => {
+    if (!orderId) {
+      alert("Invalid order ID");
+      return;
+    }
+    setLoadingOrderDetails(true);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      const response = await api.get(`api/orders/${orderId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.data && response.data.isSuccess) {
+        setSelectedOrder(response.data.value.data);
+        setShowOrderDetailsModal(true);
+      } else {
+        throw new Error(
+          response.data.message || "Failed to fetch order details"
+        );
+      }
+    } catch (err) {
+      console.error("Error fetching order details:", err);
+      alert("Không thể tải thông tin đơn hàng. Vui lòng thử lại sau.");
+    } finally {
+      setLoadingOrderDetails(false);
+    }
+  };
+
   // Return all the state and handlers for use in the Dashboard component
   return {
     // State
@@ -427,6 +539,7 @@ export const useDashboardStore = () => {
     users,
     products,
     categories,
+    orders,
     isLoading,
     error,
     stats,
@@ -443,12 +556,24 @@ export const useDashboardStore = () => {
     categoryProducts,
     selectedCategoryName,
     loadingCategoryProducts,
+    showUserDetailsModal,
+    setShowUserDetailsModal,
+    selectedUser,
+    setSelectedUser,
+    loadingUserDetails,
+    showOrderDetailsModal,
+    setShowOrderDetailsModal,
+    selectedOrder,
+    setSelectedOrder,
+    loadingOrderDetails,
     // Handlers
     handleUserAction,
+    handleViewUserDetails,
     handleProductAction,
     handleViewCategoryDetails,
     handleAddCategory,
     handleEditCategory,
     handleDeleteCategory,
+    handleViewOrderDetails,
   };
 };
