@@ -279,15 +279,11 @@ const RegisterSupplier: React.FC = () => {
 
           {/* Business Information Section */}
           <div>
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
-              Thông tin kinh doanh
-            </h2>
-
             <div className="space-y-6">
               {/* Business Description */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Mô tả doanh nghiệp <span className="text-red-500">*</span>
+                  Mô tả <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <div className="absolute top-3 left-3 flex items-start pointer-events-none">
@@ -299,7 +295,7 @@ const RegisterSupplier: React.FC = () => {
                     onChange={handleInputChange}
                     rows={4}
                     className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                    placeholder="Mô tả về doanh nghiệp hoặc sản phẩm bạn dự định bán trên UniSeapShop"
+                    placeholder="Mô tả sản phẩm của bạn"
                     required
                   ></textarea>
                 </div>

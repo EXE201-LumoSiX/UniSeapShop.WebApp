@@ -69,7 +69,7 @@ const Order: React.FC = () => {
     const token = localStorage.getItem("token");
     if (!token) {
       alert("Vui lòng đăng nhập để tiến hành thanh toán");
-      navigate("/login", { state: { from: "/orderdetail" } });
+      navigate("/login", { state: { from: "/order-detail" } });
       return;
     }
 
@@ -207,7 +207,7 @@ const Order: React.FC = () => {
         if (error.response.status === 401) {
           errorMessage = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
           localStorage.removeItem("token");
-          navigate("/login", { state: { from: "/orderdetail" } });
+          navigate("/login", { state: { from: "/order-detail" } });
         } else if (error.response.data?.error) {
           errorMessage = error.response.data.error;
         }
