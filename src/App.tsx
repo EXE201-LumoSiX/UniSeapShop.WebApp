@@ -51,8 +51,8 @@ const App: React.FC = () => {
         <Route path="/login" element={<Login onLogin={handleLogin} />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="/cart" element={<Cart />} />
-        <Route path="/order-detail" element={<Order />} />
-        <Route path="/order-success" element={<OrderSuccess />} />
+        <Route path="/orderdetail" element={<Order />} />
+        <Route path="/ordersuccess" element={<OrderSuccess />} />
         <Route path="/sell" element={<Sell />} />
         <Route path="/register-supplier" element={<RegisterSupplier />} />
         <Route path="/success-payment" element={<PaymentSuccess />} />

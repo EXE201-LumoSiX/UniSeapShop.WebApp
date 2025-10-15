@@ -167,7 +167,7 @@ const Order: React.FC = () => {
           };
 
           // Navigate to success page with order data
-          navigate("/order-success", { state: { orderData } });
+          navigate("/ordersuccess", { state: { orderData } });
         } else if (selectedPaymentMethod === "PayOS" && orderId) {
           // For PayOS, create payment link and redirect
           const paymentResponse = await api.post(
@@ -207,7 +207,7 @@ const Order: React.FC = () => {
         if (error.response.status === 401) {
           errorMessage = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
           localStorage.removeItem("token");
-          navigate("/login", { state: { from: "/order-detail" } });
+          navigate("/login", { state: { from: "/orderdetail" } });
         } else if (error.response.data?.error) {
           errorMessage = error.response.data.error;
         }
