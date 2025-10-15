@@ -20,6 +20,8 @@ import {
 } from "../../redux/feature/cartSlice";
 import { useSelector, useDispatch } from "react-redux";
 import api from "../../config/axios";
+import { toMediaUrl } from '../../helpers/image';
+
 
 const Cart: React.FC = () => {
   const dispatch = useDispatch();
@@ -301,7 +303,7 @@ const handleCheckout = () => {
                   {/* Product Image */}
                   <div className="flex-shrink-0">
                     <img
-                      src={item.product.productImage}
+                      src={toMediaUrl(item.product.productImage)}
                       alt={item.product.productName}
                       className="w-full md:w-32 h-32 object-cover rounded-lg"
                     />

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../../config/axios";
 import { Heart } from "lucide-react";
+import { toMediaUrl } from '../../helpers/image';
 
 interface ProductDetail {
   id: string;
@@ -257,7 +258,7 @@ const ProductById: React.FC = () => {
             <div className="bg-white rounded-xl overflow-hidden shadow-md border border-gray-200">
               {product.productImage ? (
                 <img
-                  src={product.productImage}
+                  src={toMediaUrl(product.productImage)}
                   alt={product.productName}
                   className="w-full h-auto object-cover aspect-square"
                   onError={handleImageError}

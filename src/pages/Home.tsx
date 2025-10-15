@@ -3,6 +3,8 @@ import api from '../config/axios';
 import Hero from '../components/Hero';
 import { useNavigationHandlers } from "../utils/navigationHandlers";
 import { Heart } from "lucide-react";
+import { toMediaUrl } from '../helpers/image';
+
 
 const Home: React.FC = () => {
   const [products, setProducts] = useState<any[]>([]);
@@ -104,7 +106,7 @@ const Home: React.FC = () => {
                     {/* Image */}
                     <div className="relative overflow-hidden">
                       <img
-                        src={product.productImage || "https://via.placeholder.com/300x200?text=No+Image"}
+                        src={toMediaUrl(product.productImage)}
                         alt={product.productName}
                         className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                       />
