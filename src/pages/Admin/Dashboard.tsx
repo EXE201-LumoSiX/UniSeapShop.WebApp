@@ -74,6 +74,7 @@ const Admin: React.FC = () => {
     handleDeleteCategory,
     handleViewOrderDetails,
     handleUpdateStatusPayment,
+    handleCancelPayment,
   } = useDashboardStore();
 
   const { handleLogout } = useNavigationHandlers();
@@ -901,67 +902,50 @@ const Admin: React.FC = () => {
 
   const renderPayments = () => (
     <div className="space-y-6">
-      {/* Search, Filter and Date Range */}
+      {/* Payments Header */}
       <div className="bg-white rounded-xl shadow-md p-6">
-        <div className="flex flex-col space-y-4">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0 md:space-x-4">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <h2 className="text-xl font-bold text-gray-900">
+            Quản lý thanh toán
+          </h2>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative">
+              <Search className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 placeholder="Tìm kiếm thanh toán..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
               />
             </div>
-            <div>
-              <select
-                value={paymentStatusFilter}
-                onChange={(e) => setPaymentStatusFilter(e.target.value)}
-                className="w-full md:w-auto px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
-              >
-                <option value="all">Tất cả trạng thái</option>
-                <option value="Pending">Chờ thanh toán</option>
-                <option value="Completed">Đã thanh toán</option>
-                <option value="Failed">Thất bại</option>
-                <option value="Refunded">Đã hoàn tiền</option>
-                <option value="Cancelled">Đã hủy</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-4">
-            <div className="flex items-center space-x-2">
-              <label className="text-sm text-gray-700">Từ ngày:</label>
+            <select
+              value={paymentStatusFilter}
+              onChange={(e) => setPaymentStatusFilter(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+            >
+              <option value="all">Tất cả trạng thái</option>
+              <option value="Completed">Đã hoàn thành</option>
+              <option value="Pending">Chờ xử lý</option>
+              <option value="Failed">Thất bại</option>
+              <option value="Refunded">Đã hoàn tiền</option>
+              <option value="Cancelled">Đã hủy</option>
+            </select>
+            <div className="flex items-center gap-2">
               <input
                 type="date"
                 value={paymentFromDate}
                 onChange={(e) => setPaymentFromDate(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
               />
-            </div>
-            <div className="flex items-center space-x-2">
-              <label className="text-sm text-gray-700">Đến ngày:</label>
+              <span>đến</span>
               <input
                 type="date"
                 value={paymentToDate}
                 onChange={(e) => setPaymentToDate(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
               />
             </div>
-            <button
-              className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg flex items-center space-x-2"
-              onClick={() => {
-                setPaymentFromDate("");
-                setPaymentToDate("");
-                setPaymentStatusFilter("all");
-                setSearchTerm("");
-              }}
-            >
-              <RefreshCw className="h-4 w-4" />
-              <span>Đặt lại</span>
-            </button>
           </div>
         </div>
       </div>
@@ -995,6 +979,9 @@ const Admin: React.FC = () => {
                     Mã đơn hàng
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Khách hàng
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Phương thức
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1015,57 +1002,43 @@ const Admin: React.FC = () => {
                 {payments && payments.length > 0 ? (
                   payments.map((payment) => (
                     <tr key={payment.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {payment.id}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
+                        #{payment.id?.substring(0, 8)}...
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {payment.orderId}
+                        #{payment.orderId?.substring(0, 8)}...
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <CreditCard className="h-4 w-4 text-gray-500 mr-2" />
-                          <span className="text-sm text-gray-900">
-                            {payment.paymentMethod}
-                          </span>
-                        </div>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {payment.customerName}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <DollarSign className="h-4 w-4 text-gray-500 mr-1" />
-                          <span className="text-sm font-medium text-gray-900">
-                            {payment.amount.toLocaleString()} VNĐ
-                          </span>
-                        </div>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {payment.paymentMethod}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-amber-800">
+                        {payment.amount?.toLocaleString()} VNĐ
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {new Date(payment.paymentDate).toLocaleDateString(
-                          "vi-VN",
-                          {
-                            year: "numeric",
-                            month: "2-digit",
-                            day: "2-digit",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          }
+                          "vi-VN"
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getPaymentStatusBadgeClass(
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${getPaymentStatusBadgeClass(
                             payment.status
                           )}`}
                         >
-                          {getPaymentStatusText(payment.status)}
+                          {payment.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center space-x-2">
                           {payment.status === "Pending" && (
                             <>
                               <button
                                 onClick={() =>
                                   handleUpdateStatusPayment(
-                                    payment.id,
+                                    payment.orderId,
                                     "Completed"
                                   )
                                 }
@@ -1075,25 +1048,19 @@ const Admin: React.FC = () => {
                                 <CheckCircle className="h-4 w-4" />
                               </button>
                               <button
-                                onClick={() =>
-                                  handleUpdateStatusPayment(
-                                    payment.id,
-                                    "Failed"
-                                  )
-                                }
+                                onClick={() => handleCancelPayment(payment.id)}
                                 className="p-1 bg-red-100 text-red-600 rounded hover:bg-red-200"
-                                title="Đánh dấu thất bại"
+                                title="Hủy thanh toán"
                               >
-                                <XCircle className="h-4 w-4" />
+                                <X className="h-4 w-4" />
                               </button>
                             </>
                           )}
-                          {(payment.status === "Completed" ||
-                            payment.status === "Failed") && (
+                          {payment.status === "Completed" && (
                             <button
                               onClick={() =>
                                 handleUpdateStatusPayment(
-                                  payment.id,
+                                  payment.orderId,
                                   "Refunded"
                                 )
                               }
@@ -1103,13 +1070,6 @@ const Admin: React.FC = () => {
                               <RefreshCw className="h-4 w-4" />
                             </button>
                           )}
-                          <button
-                            onClick={() => handleViewPaymentDetails(payment.id)}
-                            className="p-1 bg-yellow-100 text-yellow-600 rounded hover:bg-yellow-200"
-                            title="Xem chi tiết"
-                          >
-                            <ReceiptText className="h-4 w-4" />
-                          </button>
                         </div>
                       </td>
                     </tr>
@@ -1117,7 +1077,7 @@ const Admin: React.FC = () => {
                 ) : (
                   <tr>
                     <td
-                      colSpan={7}
+                      colSpan={8}
                       className="px-6 py-8 text-center text-gray-500"
                     >
                       Không tìm thấy thanh toán nào
@@ -1129,188 +1089,8 @@ const Admin: React.FC = () => {
           </div>
         )}
       </div>
-
-      {/* Payment Details Modal would go here */}
-      {showPaymentDetailsModal && selectedPayment && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-2xl w-full p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-gray-900">
-                Chi tiết thanh toán
-              </h3>
-              <button
-                onClick={() => setShowPaymentDetailsModal(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-500">Mã thanh toán</p>
-                  <p className="font-medium">{selectedPayment.id}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Mã đơn hàng</p>
-                  <p className="font-medium">{selectedPayment.orderId}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">
-                    Phương thức thanh toán
-                  </p>
-                  <div className="flex items-center">
-                    <CreditCard className="h-4 w-4 text-gray-500 mr-2" />
-                    <p className="font-medium">
-                      {selectedPayment.paymentMethod}
-                    </p>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Trạng thái</p>
-                  <span
-                    className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getPaymentStatusBadgeClass(
-                      selectedPayment.status
-                    )}`}
-                  >
-                    {getPaymentStatusText(selectedPayment.status)}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Ngày thanh toán</p>
-                  <p className="font-medium">
-                    {new Date(selectedPayment.paymentDate).toLocaleDateString(
-                      "vi-VN",
-                      {
-                        year: "numeric",
-                        month: "2-digit",
-                        day: "2-digit",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      }
-                    )}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Số tiền</p>
-                  <p className="font-medium text-amber-800">
-                    {selectedPayment.amount.toLocaleString()} VNĐ
-                  </p>
-                </div>
-              </div>
-
-              <div className="border-t border-gray-200 pt-4 mt-4">
-                <h4 className="font-medium text-gray-900 mb-3">
-                  Thông tin người thanh toán
-                </h4>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-500">Họ tên</p>
-                    <p className="font-medium">
-                      {selectedPayment.customerName || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Email</p>
-                    <p className="font-medium">
-                      {selectedPayment.customerEmail || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Số điện thoại</p>
-                    <p className="font-medium">
-                      {selectedPayment.customerPhone || "N/A"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {selectedPayment.transactionId && (
-                <div className="border-t border-gray-200 pt-4 mt-4">
-                  <h4 className="font-medium text-gray-900 mb-3">
-                    Thông tin giao dịch
-                  </h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-500">Mã giao dịch</p>
-                      <p className="font-medium">
-                        {selectedPayment.transactionId}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Cổng thanh toán</p>
-                      <p className="font-medium">
-                        {selectedPayment.paymentGateway ||
-                          selectedPayment.paymentMethod}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {selectedPayment.note && (
-                <div className="border-t border-gray-200 pt-4 mt-4">
-                  <h4 className="font-medium text-gray-900 mb-2">Ghi chú</h4>
-                  <p className="text-gray-700">{selectedPayment.note}</p>
-                </div>
-              )}
-
-              <div className="border-t border-gray-200 pt-4 mt-4 flex justify-end space-x-3">
-                {selectedPayment.status === "Pending" && (
-                  <>
-                    <button
-                      onClick={() => {
-                        handleUpdateStatusPayment(
-                          selectedPayment.id,
-                          "Completed"
-                        );
-                        setShowPaymentDetailsModal(false);
-                      }}
-                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2"
-                    >
-                      <CheckCircle className="h-4 w-4" />
-                      <span>Xác nhận thanh toán</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        handleUpdateStatusPayment(selectedPayment.id, "Failed");
-                        setShowPaymentDetailsModal(false);
-                      }}
-                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2"
-                    >
-                      <XCircle className="h-4 w-4" />
-                      <span>Đánh dấu thất bại</span>
-                    </button>
-                  </>
-                )}
-                {(selectedPayment.status === "Completed" ||
-                  selectedPayment.status === "Failed") && (
-                  <button
-                    onClick={() => {
-                      handleUpdateStatusPayment(selectedPayment.id, "Refunded");
-                      setShowPaymentDetailsModal(false);
-                    }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2"
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                    <span>Hoàn tiền</span>
-                  </button>
-                )}
-                <button
-                  onClick={() => setShowPaymentDetailsModal(false)}
-                  className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg"
-                >
-                  Đóng
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
-
   const renderSettings = () => (
     <div className="space-y-6">
       <div className="bg-white rounded-xl shadow-md p-6">

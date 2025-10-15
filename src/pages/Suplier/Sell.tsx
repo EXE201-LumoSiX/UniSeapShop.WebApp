@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Upload, DollarSign, Percent } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import api from '../../config/axios';
-import RegisterSupplier from './RegisterSupplier';
+import React, { useState, useEffect } from "react";
+import { Upload, DollarSign, Percent } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import api from "../../config/axios";
+import RegisterSupplier from "./RegisterSupplier";
 
 const Sell: React.FC = () => {
   const navigate = useNavigate();
@@ -12,47 +12,49 @@ const Sell: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [isSupplier, setIsSupplier] = useState<boolean | null>(null);
-  
+  const [imagePreview, setImagePreview] = useState<string>("");
+
   const [formData, setFormData] = useState({
-    ProductName: '',
-    Description: '',
+    ProductName: "",
+    Description: "",
     OriginalPrice: 0,
-    ProductImageFile: '',
-    UsageHistory: '',
-    CategoryId: '',
+    ProductImageFile: "",
+    UsageHistory: "",
+    CategoryId: "",
     Quantity: 1,
-    SupplierId: '',
-    Discount: 0
+    SupplierId: "",
+    Discount: 0,
   });
 
-  const usageHistoryOptions = ['Mới', 'Đã sử dụng dưới 1 năm', '1-3 năm', 'Trên 3 năm'];
+  const usageHistoryOptions = [
+    "Mới",
+    "Đã sử dụng dưới 1 năm",
+    "1-3 năm",
+    "Trên 3 năm",
+  ];
 
   // Check if user is a supplier
   const checkSupplier = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
-      navigate('/login');
+      navigate("/login");
       return;
     }
 
     try {
-      const user = JSON.parse(localStorage.getItem("user") || '{}');
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
       const email = user?.email || "";
-      
+
       if (!email) {
         throw new Error("Email not found");
       }
 
-      const response = await api.post(
-        'api/Auth/check-exist-supplier',
-        email,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await api.post("api/Auth/check-exist-supplier", email, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
       setIsSupplier(!!response.data.value.data);
     } catch (err) {
@@ -66,24 +68,31 @@ const Sell: React.FC = () => {
     // Kiểm tra đăng nhập và kiểm tra nhà cung cấp
     const token = localStorage.getItem("token");
     if (!token) {
-      navigate('/login');
+      navigate("/login");
       return;
     }
     setIsLoggedIn(true);
-    
+
     // Lấy ID người dùng từ localStorage hoặc từ token
-    const userIdFromStorage = localStorage.getItem("userId");
-    if (userIdFromStorage) {
-      setUserId(userIdFromStorage);
-      setFormData(prev => ({
-        ...prev,
-        supplierId: userIdFromStorage
-      }));
+    const userString = localStorage.getItem("user");
+    if (userString) {
+      try {
+        const userObject = JSON.parse(userString);
+        // Lưu ID người dùng vào state
+        setUserId(userObject.userId);
+        // Lưu ID người dùng vào formData
+        setFormData((prev) => ({
+          ...prev,
+          SupplierId: userObject.userId,
+        }));
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+      }
     }
 
     // Kiểm tra người dùng có phải là nhà cung cấp không
     checkSupplier();
-    
+
     // Lấy danh sách danh mục
     const fetchCategories = async () => {
       setIsLoading(true);
@@ -94,9 +103,9 @@ const Sell: React.FC = () => {
           const categoriesData = response.data.value.data || [];
           setCategories(categoriesData);
           if (categoriesData.length > 0) {
-            setFormData(prev => ({
+            setFormData((prev) => ({
               ...prev,
-              categoryId: categoriesData[0].id
+              CategoryId: categoriesData[0].id,
             }));
           }
         } else {
@@ -113,20 +122,24 @@ const Sell: React.FC = () => {
     fetchCategories();
   }, [navigate]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     const { name, value, type } = e.target;
-    
+
     // Xử lý các trường số
-    if (type === 'number') {
+    if (type === "number") {
       const numValue = parseFloat(value);
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        [name]: isNaN(numValue) ? 0 : numValue
+        [name]: isNaN(numValue) ? 0 : numValue,
       }));
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        [name]: value
+        [name]: value,
       }));
     }
   };
@@ -134,70 +147,90 @@ const Sell: React.FC = () => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      const reader = new FileReader();
-      
-      reader.onloadend = () => {
-        // Chuyển đổi hình ảnh thành base64 string
-        const base64String = reader.result as string;
-        setFormData(prev => ({
-          ...prev,
-          ProductImageFile: base64String
-        }));
-      };
-      
-      reader.readAsDataURL(file);
+      // Lưu file để gửi lên API
+      setFormData((prev) => ({
+        ...prev,
+        ProductImageFile: file,
+      }));
+
+      // Tạo URL để preview
+      setImagePreview(URL.createObjectURL(file));
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!isLoggedIn) {
-      navigate('/login');
+      navigate("/login");
       return;
     }
 
     if (!formData.SupplierId && userId) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        SupplierId: userId
+        SupplierId: userId,
       }));
     }
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      // Chuẩn bị dữ liệu để gửi
-      const productData = {
-        ProductName: formData.ProductName,
-        Description: formData.Description,
-        OriginalPrice: formData.OriginalPrice,
-        ProductImageFile: formData.ProductImageFile,
-        UsageHistory: formData.UsageHistory,
-        CategoryId: formData.CategoryId,
-        Quantity: formData.Quantity,
-        SupplierId: formData.SupplierId || userId,
-        Discount: formData.Discount
-      };
-      
+      const token = localStorage.getItem("token");
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
+      // Tạo FormData để gửi file
+      const formDataToSend = new FormData();
+      formDataToSend.append("ProductName", formData.ProductName);
+      formDataToSend.append("Description", formData.Description);
+      formDataToSend.append("OriginalPrice", formData.OriginalPrice.toString());
+      formDataToSend.append("UsageHistory", formData.UsageHistory);
+      formDataToSend.append("CategoryId", formData.CategoryId);
+      formDataToSend.append("Quantity", formData.Quantity.toString());
+      formDataToSend.append("SupplierId", formData.SupplierId || userId || "");
+      formDataToSend.append("Discount", formData.Discount.toString());
+
+      // Thêm file hình ảnh nếu có
+      if (formData.ProductImageFile) {
+        formDataToSend.append("ProductImageFile", formData.ProductImageFile);
+      }
+
       // Gửi request đến API
-      const response = await api.post('api/Product', productData);
-      
-      if (response.data && response.data.isSuccess) {
-        alert('Đăng bán sản phẩm thành công!');
-        navigate('/'); // Chuyển về trang chủ sau khi đăng bán thành công
+      const response = await api.post("api/Product", formDataToSend, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      // Check for success in different possible response formats
+      if (
+        response.data &&
+        (response.data.isSuccess === true ||
+          (response.data.id && response.data.productName) ||
+          (response.data.value && response.data.value.data))
+      ) {
+        navigate("/"); // Chuyển về trang chủ sau khi đăng bán thành công
       } else {
-        throw new Error(response.data.message || 'Đăng bán sản phẩm thất bại');
+        throw new Error(
+          response.data?.message ||
+            response.data?.error ||
+            "Đăng bán sản phẩm thất bại"
+        );
       }
     } catch (err: any) {
-      console.error('Lỗi khi đăng bán sản phẩm:', err);
-      setError(err.message || 'Đăng bán sản phẩm thất bại. Vui lòng thử lại sau.');
+      console.error("Lỗi khi đăng bán sản phẩm:", err);
+      setError(
+        err.message || "Đăng bán sản phẩm thất bại. Vui lòng thử lại sau."
+      );
     } finally {
       setIsLoading(false);
     }
   };
-
   if (!isLoggedIn) {
     return null; // Sẽ chuyển hướng trong useEffect
   }
@@ -222,34 +255,58 @@ const Sell: React.FC = () => {
       <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-lg">
         {/* Header */}
         <div className="bg-gradient-to-r from-amber-100 to-yellow-100 p-6 rounded-t-2xl border-b">
-          <h1 className="text-3xl font-bold text-amber-900">Đăng bán sản phẩm</h1>
-          <p className="text-amber-700 mt-2">Điền thông tin chi tiết về sản phẩm bạn muốn bán</p>
+          <h1 className="text-3xl font-bold text-amber-900">
+            Đăng bán sản phẩm
+          </h1>
+          <p className="text-amber-700 mt-2">
+            Điền thông tin chi tiết về sản phẩm bạn muốn bán
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="p-8 space-y-8">
           {/* Hiển thị lỗi nếu có */}
           {error && (
-            <div className="bg-red-50 text-red-700 p-4 rounded-lg">
-              {error}
-            </div>
+            <div className="bg-red-50 text-red-700 p-4 rounded-lg">{error}</div>
           )}
-          
+
+          {/* Supplier Name */}
+          <p className="mt-1">
+            Người bán:{" "}
+            <strong>
+              {(() => {
+                try {
+                  const userObject = JSON.parse(
+                    localStorage.getItem("user") || "{}"
+                  );
+                  return userObject.username || "Chưa có tên";
+                } catch (error) {
+                  return "Chưa có tên";
+                }
+              })()}
+            </strong>
+          </p>
           {/* Product Image */}
           <div>
             <label className="block text-lg font-medium text-gray-700 mb-3">
               Hình ảnh sản phẩm *
             </label>
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-yellow-400 transition-colors duration-200">
-              {formData.ProductImageFile ? (
+              {imagePreview ? (
                 <div className="relative">
                   <img
-                    src={formData.ProductImageFile}
+                    src={imagePreview}
                     alt="Product preview"
                     className="h-64 mx-auto object-contain"
                   />
                   <button
                     type="button"
-                    onClick={() => setFormData(prev => ({ ...prev, ProductImageFile: '' }))}
+                    onClick={() => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        ProductImageFile: "",
+                      }));
+                      setImagePreview("");
+                    }}
                     className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center"
                   >
                     ×
@@ -258,7 +315,9 @@ const Sell: React.FC = () => {
               ) : (
                 <>
                   <Upload className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600 mb-3">Chọn ảnh đại diện cho sản phẩm của bạn</p>
+                  <p className="text-gray-600 mb-3">
+                    Chọn ảnh đại diện cho sản phẩm của bạn
+                  </p>
                   <input
                     type="file"
                     accept="image/*"
@@ -279,7 +338,7 @@ const Sell: React.FC = () => {
 
           {/* Rest of the form remains unchanged */}
           {/* ... existing form fields ... */}
-          
+
           {/* Product Name */}
           <div>
             <label className="block text-lg font-medium text-gray-700 mb-2">
@@ -313,7 +372,7 @@ const Sell: React.FC = () => {
                 {isLoading ? (
                   <option>Đang tải...</option>
                 ) : categories.length > 0 ? (
-                  categories.map(cat => (
+                  categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>
                       {cat.categoryName}
                     </option>
@@ -335,7 +394,7 @@ const Sell: React.FC = () => {
                 required
               >
                 <option value="">Chọn tình trạng</option>
-                {usageHistoryOptions.map(option => (
+                {usageHistoryOptions.map((option) => (
                   <option key={option} value={option}>
                     {option}
                   </option>
@@ -357,7 +416,7 @@ const Sell: React.FC = () => {
                 <input
                   type="number"
                   name="OriginalPrice"
-                  value={formData.OriginalPrice || ''}
+                  value={formData.OriginalPrice || ""}
                   onChange={handleInputChange}
                   className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-500 text-lg"
                   placeholder="Nhập giá bán"
@@ -377,7 +436,7 @@ const Sell: React.FC = () => {
                 <input
                   type="number"
                   name="Discount"
-                  value={formData.Discount || ''}
+                  value={formData.Discount || ""}
                   onChange={handleInputChange}
                   className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-500 text-lg"
                   placeholder="Nhập % giảm giá"
@@ -396,7 +455,7 @@ const Sell: React.FC = () => {
             <input
               type="number"
               name="Quantity"
-              value={formData.Quantity || ''}
+              value={formData.Quantity || ""}
               onChange={handleInputChange}
               className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-500 text-lg"
               placeholder="Nhập số lượng sản phẩm"
@@ -434,17 +493,17 @@ const Sell: React.FC = () => {
                   Đang xử lý...
                 </>
               ) : (
-                'Đăng bán sản phẩm'
+                "Đăng bán sản phẩm"
               )}
             </button>
           </div>
 
           {/* Terms */}
           <div className="text-center text-gray-600 text-sm">
-            Bằng việc đăng bán sản phẩm, bạn đồng ý với các{' '}
+            Bằng việc đăng bán sản phẩm, bạn đồng ý với các{" "}
             <a href="/terms" className="text-yellow-600 hover:underline">
               điều khoản và điều kiện
-            </a>{' '}
+            </a>{" "}
             của UniSeapShop
           </div>
         </form>
