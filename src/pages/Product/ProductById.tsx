@@ -378,16 +378,6 @@ const ProductById: React.FC = () => {
             </div>
           </div>
         </div>
-
-        {/* Debug information - can be removed in production */}
-        {/* {process.env.NODE_ENV === "development" && (
-          <div className="mt-8 p-4 bg-gray-100 rounded-lg">
-            <h3 className="font-bold mb-2">Debug Info:</h3>
-            <p>Product ID: {id}</p>
-            <p>Image URL: {product.productImage || "No image URL"}</p>
-            <p>API Base URL: {api.defaults.baseURL}</p>
-          </div>
-        )} */}
       </div>
     </div>
   );

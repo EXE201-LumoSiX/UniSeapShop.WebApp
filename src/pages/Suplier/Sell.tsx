@@ -2,31 +2,68 @@ import React, { useState, useEffect } from 'react';
 import { Upload, DollarSign, Percent } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../config/axios';
+import RegisterSupplier from './RegisterSupplier';
 
-const SellItem: React.FC = () => {
+const Sell: React.FC = () => {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [isSupplier, setIsSupplier] = useState<boolean | null>(null);
   
   const [formData, setFormData] = useState({
-    productName: '',
-    description: '',
-    originalPrice: 0,
-    productImage: '',
-    usageHistory: '',
-    categoryId: '',
-    quantity: 1,
-    supplierId: '',
-    discount: 0
+    ProductName: '',
+    Description: '',
+    OriginalPrice: 0,
+    ProductImageFile: '',
+    UsageHistory: '',
+    CategoryId: '',
+    Quantity: 1,
+    SupplierId: '',
+    Discount: 0
   });
 
   const usageHistoryOptions = ['Mới', 'Đã sử dụng dưới 1 năm', '1-3 năm', 'Trên 3 năm'];
 
+  // Check if user is a supplier
+  const checkSupplier = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+
+    try {
+      const user = JSON.parse(localStorage.getItem("user") || '{}');
+      const email = user?.email || "";
+      
+      if (!email) {
+        throw new Error("Email not found");
+      }
+
+      const response = await api.post(
+        'api/Auth/check-exist-supplier',
+        email,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      setIsSupplier(!!response.data.value.data);
+    } catch (err) {
+      console.error("Error checking supplier:", err);
+      setError("Không thể kiểm tra thông tin nhà cung cấp");
+      setIsSupplier(false);
+    }
+  };
+
   useEffect(() => {
-    // Kiểm tra đăng nhập
+    // Kiểm tra đăng nhập và kiểm tra nhà cung cấp
     const token = localStorage.getItem("token");
     if (!token) {
       navigate('/login');
@@ -44,7 +81,8 @@ const SellItem: React.FC = () => {
       }));
     }
 
-
+    // Kiểm tra người dùng có phải là nhà cung cấp không
+    checkSupplier();
     
     // Lấy danh sách danh mục
     const fetchCategories = async () => {
@@ -103,7 +141,7 @@ const SellItem: React.FC = () => {
         const base64String = reader.result as string;
         setFormData(prev => ({
           ...prev,
-          productImage: base64String
+          ProductImageFile: base64String
         }));
       };
       
@@ -118,11 +156,11 @@ const SellItem: React.FC = () => {
       navigate('/login');
       return;
     }
-    
-    if (!formData.supplierId && userId) {
+
+    if (!formData.SupplierId && userId) {
       setFormData(prev => ({
         ...prev,
-        supplierId: userId
+        SupplierId: userId
       }));
     }
     
@@ -132,15 +170,15 @@ const SellItem: React.FC = () => {
     try {
       // Chuẩn bị dữ liệu để gửi
       const productData = {
-        productName: formData.productName,
-        description: formData.description,
-        originalPrice: formData.originalPrice,
-        productImage: formData.productImage,
-        usageHistory: formData.usageHistory,
-        categoryId: formData.categoryId,
-        quantity: formData.quantity,
-        supplierId: formData.supplierId || userId,
-        discount: formData.discount
+        ProductName: formData.ProductName,
+        Description: formData.Description,
+        OriginalPrice: formData.OriginalPrice,
+        ProductImageFile: formData.ProductImageFile,
+        UsageHistory: formData.UsageHistory,
+        CategoryId: formData.CategoryId,
+        Quantity: formData.Quantity,
+        SupplierId: formData.SupplierId || userId,
+        Discount: formData.Discount
       };
       
       // Gửi request đến API
@@ -162,6 +200,21 @@ const SellItem: React.FC = () => {
 
   if (!isLoggedIn) {
     return null; // Sẽ chuyển hướng trong useEffect
+  }
+
+  // Hiển thị form đăng ký nhà cung cấp nếu chưa là nhà cung cấp
+  if (isSupplier === false) {
+    return <RegisterSupplier />;
+  }
+
+  // Hiển thị loading khi đang kiểm tra
+  if (isSupplier === null) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-500"></div>
+        <p className="ml-3 text-lg text-gray-700">Đang kiểm tra thông tin...</p>
+      </div>
+    );
   }
 
   return (
@@ -187,16 +240,16 @@ const SellItem: React.FC = () => {
               Hình ảnh sản phẩm *
             </label>
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-yellow-400 transition-colors duration-200">
-              {formData.productImage ? (
+              {formData.ProductImageFile ? (
                 <div className="relative">
-                  <img 
-                    src={formData.productImage} 
-                    alt="Product preview" 
+                  <img
+                    src={formData.ProductImageFile}
+                    alt="Product preview"
                     className="h-64 mx-auto object-contain"
                   />
                   <button
                     type="button"
-                    onClick={() => setFormData(prev => ({ ...prev, productImage: '' }))}
+                    onClick={() => setFormData(prev => ({ ...prev, ProductImageFile: '' }))}
                     className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center"
                   >
                     ×
@@ -224,6 +277,9 @@ const SellItem: React.FC = () => {
             </div>
           </div>
 
+          {/* Rest of the form remains unchanged */}
+          {/* ... existing form fields ... */}
+          
           {/* Product Name */}
           <div>
             <label className="block text-lg font-medium text-gray-700 mb-2">
@@ -231,8 +287,8 @@ const SellItem: React.FC = () => {
             </label>
             <input
               type="text"
-              name="productName"
-              value={formData.productName}
+              name="ProductName"
+              value={formData.ProductName}
               onChange={handleInputChange}
               className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-500 text-lg"
               placeholder="Nhập tên sản phẩm"
@@ -247,8 +303,8 @@ const SellItem: React.FC = () => {
                 Danh mục *
               </label>
               <select
-                name="categoryId"
-                value={formData.categoryId}
+                name="CategoryId"
+                value={formData.CategoryId}
                 onChange={handleInputChange}
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-500 text-lg"
                 required
@@ -272,8 +328,8 @@ const SellItem: React.FC = () => {
                 Tình trạng sử dụng *
               </label>
               <select
-                name="usageHistory"
-                value={formData.usageHistory}
+                name="UsageHistory"
+                value={formData.UsageHistory}
                 onChange={handleInputChange}
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-500 text-lg"
                 required
@@ -300,8 +356,8 @@ const SellItem: React.FC = () => {
                 </div>
                 <input
                   type="number"
-                  name="originalPrice"
-                  value={formData.originalPrice || ''}
+                  name="OriginalPrice"
+                  value={formData.OriginalPrice || ''}
                   onChange={handleInputChange}
                   className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-500 text-lg"
                   placeholder="Nhập giá bán"
@@ -320,12 +376,12 @@ const SellItem: React.FC = () => {
                 </div>
                 <input
                   type="number"
-                  name="discount"
-                  value={formData.discount || ''}
+                  name="Discount"
+                  value={formData.Discount || ''}
                   onChange={handleInputChange}
                   className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-500 text-lg"
-                  placeholder="Nhập % giảm giá (nếu có)"
-                  min="0"
+                  placeholder="Nhập % giảm giá"
+                  min="-1"
                   max="100"
                 />
               </div>
@@ -339,8 +395,8 @@ const SellItem: React.FC = () => {
             </label>
             <input
               type="number"
-              name="quantity"
-              value={formData.quantity || ''}
+              name="Quantity"
+              value={formData.Quantity || ''}
               onChange={handleInputChange}
               className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-500 text-lg"
               placeholder="Nhập số lượng sản phẩm"
@@ -355,27 +411,41 @@ const SellItem: React.FC = () => {
               Mô tả sản phẩm *
             </label>
             <textarea
-              name="description"
-              value={formData.description}
+              name="Description"
+              value={formData.Description}
               onChange={handleInputChange}
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-500 text-lg"
-              placeholder="Mô tả chi tiết về sản phẩm của bạn"
               rows={5}
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-500 text-lg"
+              placeholder="Mô tả chi tiết về sản phẩm của bạn..."
               required
             ></textarea>
           </div>
 
           {/* Submit Button */}
-          <div className="pt-4">
+          <div className="pt-6">
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full bg-yellow-500 hover:bg-yellow-600 text-white py-4 rounded-lg text-xl font-medium transition-colors duration-200 ${
-                isLoading ? 'opacity-70 cursor-not-allowed' : ''
-              }`}
+              className="w-full bg-yellow-500 hover:bg-yellow-600 disabled:bg-yellow-300 text-white py-4 px-6 rounded-lg font-semibold text-lg transition-colors duration-200 shadow-md hover:shadow-lg flex items-center justify-center"
             >
-              {isLoading ? 'Đang xử lý...' : 'Đăng bán sản phẩm'}
+              {isLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+                  Đang xử lý...
+                </>
+              ) : (
+                'Đăng bán sản phẩm'
+              )}
             </button>
+          </div>
+
+          {/* Terms */}
+          <div className="text-center text-gray-600 text-sm">
+            Bằng việc đăng bán sản phẩm, bạn đồng ý với các{' '}
+            <a href="/terms" className="text-yellow-600 hover:underline">
+              điều khoản và điều kiện
+            </a>{' '}
+            của UniSeapShop
           </div>
         </form>
       </div>
@@ -383,4 +453,4 @@ const SellItem: React.FC = () => {
   );
 };
 
-export default SellItem;
+export default Sell;

@@ -5,9 +5,7 @@ const API_URL = 'https://uniseapshop.fpt-devteam.fun/';
 
 const api = axios.create({
   baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  timeout: 10000,
 });
 
 // Request interceptor
@@ -16,7 +14,7 @@ api.interceptors.request.use(
     // Lấy token từ localStorage (hoặc nơi bạn lưu trữ token)
     const token = localStorage.getItem('token');
     if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
@@ -37,9 +35,6 @@ api.interceptors.response.use(
         case 401:
           // Xử lý lỗi Unauthorized
           console.log('Unauthorized, logging out...');
-          localStorage.removeItem('token');
-          // Redirect to login page
-          window.location.href = '/login';
           break;
         case 403:
           // Xử lý lỗi Forbidden

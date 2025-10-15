@@ -13,10 +13,14 @@ import Admin from "./pages/Admin/Dashboard";
 import Profile from "./pages/User/Profile";
 import ProductByCategory from "./pages/Product/ProductByCategory";
 import Cart from "./pages/User/Cart";
-import SellItem from "./pages/Suplier/Sell";
+import Sell from "./pages/Suplier/Sell";
 import ProductById from "./pages/Product/ProductById";
 import Order from "./pages/Payment/Order";
 import OrderSuccess from "./pages/Payment/OrderSucces";
+import SearchResults from "./pages/SearchResult";
+import RegisterSupplier from "./pages/Suplier/RegisterSupplier";
+import PaymentSuccess from "./pages/Payment/PaymentSuccess";
+import PaymentFailed from "./pages/Payment/PaymentFailed";
 
 const App: React.FC = () => {
   const handleLogin = () => {
@@ -26,12 +30,6 @@ const App: React.FC = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/login" element={<Login onLogin={handleLogin} />} />
-        <Route path="/unauthorized" element={<Unauthorized />} />
-
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/orderdetail" element={<Order />} />
-        <Route path="/order-success" element={<OrderSuccess />} />
         {/* Public routes */}
         <Route
           path="/"
@@ -41,7 +39,24 @@ const App: React.FC = () => {
             </Layout>
           }
         />
+        <Route
+          path="/search"
+          element={
+            <Layout>
+              <SearchResults />
+            </Layout>
+          }
+        />
         <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login onLogin={handleLogin} />} />
+        <Route path="/unauthorized" element={<Unauthorized />} />
+        <Route path="/cart" element={<Cart />} />
+        <Route path="/order-detail" element={<Order />} />
+        <Route path="/order-success" element={<OrderSuccess />} />
+        <Route path="/sell" element={<Sell />} />
+        <Route path="/register-supplier" element={<RegisterSupplier />} />
+        <Route path="/success-payment" element={<PaymentSuccess />} />
+        <Route path="/failed-payment" element={<PaymentFailed />} />
         <Route
           path="/category/:categoryName"
           element={
@@ -75,16 +90,7 @@ const App: React.FC = () => {
         </Route>
 
         {/* Routes cho Seller */}
-        <Route element={<ProtectedRoute allowedRoles={["Suplier"]} />}>
-          <Route
-            path="/sell"
-            element={
-              <Layout>
-                <SellItem />
-              </Layout>
-            }
-          />
-        </Route>
+        <Route element={<ProtectedRoute allowedRoles={["Suplier"]} />}></Route>
       </Routes>
     </Router>
   );

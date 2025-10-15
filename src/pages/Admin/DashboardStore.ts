@@ -17,6 +17,7 @@ export const useDashboardStore = () => {
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
+  const [payments, setPayments] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
@@ -26,7 +27,8 @@ export const useDashboardStore = () => {
   const [shouldRefetchCategories, setShouldRefetchCategories] = useState(false);
   const [showCategoryDetailsModal, setShowCategoryDetailsModal] =
     useState(false);
-  const [categoryProducts, setCategoryProducts] = useState<any[]>([]);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [categoryProducts, setCategoryProducts] = useState<[]>([]);
   const [selectedCategoryName, setSelectedCategoryName] = useState("");
   const [loadingCategoryProducts, setLoadingCategoryProducts] = useState(false);
   const [showUserDetailsModal, setShowUserDetailsModal] = useState(false);
@@ -35,14 +37,122 @@ export const useDashboardStore = () => {
   const [showOrderDetailsModal, setShowOrderDetailsModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [loadingOrderDetails, setLoadingOrderDetails] = useState(false);
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState("all");
+  const [paymentFromDate, setPaymentFromDate] = useState("");
+  const [paymentToDate, setPaymentToDate] = useState("");
 
   // Dashboard stats - these could be fetched from API in the future
-  const stats = {
-    totalUsers: 1250,
-    totalProducts: 3420,
-    totalSales: 89500000,
-    pendingApprovals: 15,
-  };
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalProducts: 0,
+    totalSales: 0,
+    pendingApprovals: 0,
+  });
+  // Fetch dashboard stats
+  const fetchDashboardStats = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      // Fetch all data in parallel
+      const [
+        usersResponse,
+        productsResponse,
+        ordersResponse,
+        paymentsResponse,
+      ] = await Promise.all([
+        api.get("api/User", {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        api.get("api/Product", {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        api.get("api/orders", {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        api.get("api/payments", {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
+
+      // Calculate stats from real data
+      const totalUsers = usersResponse.data?.isSuccess
+        ? usersResponse.data.value?.data?.length || 0
+        : 0;
+
+      const totalProducts = productsResponse.data?.isSuccess
+        ? productsResponse.data.value?.data?.length || 0
+        : 0;
+
+      const ordersData = ordersResponse.data?.isSuccess
+        ? ordersResponse.data.value?.data || []
+        : [];
+      const completedOrders = ordersData.filter(
+        (order) => order.status === "Completed" || order.status === "Delivered"
+      );
+      const totalSales = completedOrders.reduce(
+        (sum, order) => sum + (order.totalAmount || 0),
+        0
+      );
+
+      const productsData = productsResponse.data?.isSuccess
+        ? productsResponse.data.value?.data || []
+        : [];
+      const pendingApprovals = productsData.filter(
+        (product) => product.status === "Pending"
+      ).length;
+
+      setStats({
+        totalUsers,
+        totalProducts,
+        totalSales,
+        pendingApprovals,
+      });
+    } catch (err) {
+      console.error("Error fetching dashboard stats:", err);
+      // Keep default values on error
+      setStats({
+        totalUsers: 0,
+        totalProducts: 0,
+        totalSales: 0,
+        pendingApprovals: 0,
+      });
+    }
+  }, []);
+
+  // Fetch stats when dashboard tab is active
+  useEffect(() => {
+    if (activeTab === "dashboard") {
+      fetchDashboardStats();
+    }
+  }, [activeTab, fetchDashboardStats]);
+
+  // Also update stats when data changes in other tabs
+  useEffect(() => {
+    if (users.length > 0 || products.length > 0 || orders.length > 0) {
+      const totalUsers = users.length;
+      const totalProducts = products.length;
+      const completedOrders = orders.filter(
+        (order) => order.status === "Completed" || order.status === "Delivered"
+      );
+      const totalSales = completedOrders.reduce(
+        (sum, order) => sum + (order.totalAmount || 0),
+        0
+      );
+      const pendingApprovals = products.filter(
+        (product) => product.status === "Pending"
+      ).length;
+
+      setStats({
+        totalUsers,
+        totalProducts,
+        totalSales,
+        pendingApprovals,
+      });
+    }
+  }, [users, products, orders]);
 
   // Create a reusable function to fetch categories
   const fetchCategories = useCallback(async () => {
@@ -190,6 +300,66 @@ export const useDashboardStore = () => {
 
     fetchOrders();
   }, [activeTab]);
+
+  // Fetch payments from API
+  useEffect(() => {
+    const fetchPayments = async () => {
+      if (activeTab === "payments") {
+        setIsLoading(true);
+        setError(null);
+        try {
+          const token = localStorage.getItem("token");
+          if (!token) {
+            throw new Error("No authentication token found");
+          }
+
+          // Build query parameters
+          const queryParams = new URLSearchParams();
+
+          // Add status filter if not 'all'
+          if (paymentStatusFilter && paymentStatusFilter !== "all") {
+            queryParams.append("status", paymentStatusFilter);
+          }
+
+          // Add date filters if provided
+          if (paymentFromDate) {
+            queryParams.append("fromDate", paymentFromDate);
+          }
+
+          if (paymentToDate) {
+            queryParams.append("toDate", paymentToDate);
+          }
+
+          // Construct the URL with query parameters
+          const queryString = queryParams.toString();
+          const url = queryString
+            ? `api/payments?${queryString}`
+            : "api/payments";
+
+          const response = await api.get(url, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (response.data && response.data.isSuccess) {
+            setPayments(response.data.value.data || []);
+          } else {
+            throw new Error(
+              response.data.message || "Failed to fetch payments"
+            );
+          }
+        } catch (err) {
+          console.error("Error fetching payments:", err);
+          setError("Failed to load payments. Please try again later.");
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchPayments();
+  }, [activeTab, paymentStatusFilter, paymentFromDate, paymentToDate]);
 
   // User actions (activate, deactivate, delete)
   const handleUserAction = async (
@@ -529,6 +699,105 @@ export const useDashboardStore = () => {
     }
   };
 
+  // Payment actions
+  const handleUpdateStatusPayment = async (
+    orderId: string,
+    newStatus: string
+  ) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      const response = await api.put(
+        `api/payments/order/${orderId}/status`,
+        JSON.stringify(newStatus),
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.data && response.data.isSuccess) {
+        // Update the payment status in the payments list
+        setPayments(
+          payments.map((payment) =>
+            payment.orderId === orderId
+              ? { ...payment, status: newStatus }
+              : payment
+          )
+        );
+
+        // Also update orders if the order exists in the orders list
+        setOrders(
+          orders.map((order) =>
+            order.id === orderId ? { ...order, status: newStatus } : order
+          )
+        );
+
+        alert("Cập nhật trạng thái thanh toán thành công!");
+        return response.data.value;
+      } else {
+        throw new Error(
+          response.data.error?.message || "Failed to update payment status"
+        );
+      }
+    } catch (err) {
+      console.error("Error updating payment status:", err);
+      alert("Không thể cập nhật trạng thái thanh toán. Vui lòng thử lại.");
+      throw err;
+    }
+  };
+    const handleCancelPayment = async (paymentId: string, reason?: string) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      const payload = {
+        reason: reason || "Cancelled by admin"
+      };
+
+      const response = await api.post(
+        `api/payments/${paymentId}/cancel`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.data && response.data.isSuccess) {
+        // Update the payment status in the payments list
+        setPayments(
+          payments.map((payment) =>
+            payment.id === paymentId
+              ? { ...payment, status: "Cancelled" }
+              : payment
+          )
+        );
+        
+        alert("Payment cancelled successfully");
+        return true;
+      } else {
+        throw new Error(
+          response.data.message || "Failed to cancel payment"
+        );
+      }
+    } catch (err) {
+      console.error("Error cancelling payment:", err);
+      alert("Failed to cancel payment. Please try again.");
+      return false;
+    }
+  };
+
+
   // Return all the state and handlers for use in the Dashboard component
   return {
     // State
@@ -540,9 +809,18 @@ export const useDashboardStore = () => {
     products,
     categories,
     orders,
+    payments,
+    paymentStatusFilter,
+    setPaymentStatusFilter,
+    paymentFromDate,
+    setPaymentFromDate,
+    paymentToDate,
+    setPaymentToDate,
     isLoading,
     error,
     stats,
+    statusFilter,
+    setStatusFilter,
     showAddCategoryModal,
     setShowAddCategoryModal,
     showEditCategoryModal,
@@ -575,5 +853,7 @@ export const useDashboardStore = () => {
     handleEditCategory,
     handleDeleteCategory,
     handleViewOrderDetails,
+    handleUpdateStatusPayment,
+    handleCancelPayment,
   };
 };

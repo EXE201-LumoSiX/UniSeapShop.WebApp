@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import api from "../../config/axios";
-import { ChevronLeft, Filter, Search } from "lucide-react";
+import { ChevronLeft, Filter, Search, Heart } from "lucide-react";
 import { removeDiacritics } from "../../utils/stringUtils";
 
 interface Product {
@@ -91,6 +92,7 @@ const ProductByCategory: React.FC = () => {
     
     fetchCategoryProducts();
   }, [categoryId, categoryName]);
+  
   // Filter products based on search query
   const filteredProducts = products.filter(product =>
     product.productName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -109,6 +111,10 @@ const ProductByCategory: React.FC = () => {
         return 0; // Default sorting (could be by ID or date if available)
     }
   });
+
+  const handleProductClick = (productId: string) => {
+    navigate(`/product/${productId}`);
+  };
 
   if (loading) {
     return (
@@ -183,9 +189,49 @@ const ProductByCategory: React.FC = () => {
         </div>
       </div>
 
-      {/* Products Grid - Identical to Home page */}
+      {/* Products Grid */}
       {sortedProducts.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+          {sortedProducts.map((product) => (
+            <div
+              key={product.id}
+              className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer group overflow-hidden border border-gray-200"
+              onClick={() => handleProductClick(product.id)}
+            >
+              {/* Image */}
+              <div className="relative overflow-hidden">
+                <img
+                  src={product.productImage || "https://via.placeholder.com/300x200?text=No+Image"}
+                  alt={product.productName}
+                  className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+
+                {/* Wishlist */}
+                <button 
+                  className="absolute top-3 right-3 p-2 rounded-full bg-white/80 hover:bg-white transition-colors duration-200 group"
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent triggering the parent onClick
+                    // Add wishlist functionality here
+                  }}
+                >
+                  <Heart className="h-4 w-4 text-gray-600 group-hover:text-red-500" />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="p-5">
+                <h3 className="font-semibold text-gray-900 mb-3 line-clamp-2 group-hover:text-amber-800 transition-colors duration-200">
+                  {product.productName}
+                </h3>
+
+                <div className="flex items-center">
+                  <span className="text-xl font-bold text-amber-800">
+                    {product.price.toLocaleString()} VNĐ
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       ) : (
         <div className="text-center py-12 bg-white rounded-xl shadow-md">

@@ -11,12 +11,15 @@ import { fetchCartItems } from "../../redux/feature/cartActions";
 
 const Header: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchSuggestions, setSearchSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [categories, setCategories] = useState<any[]>([]);
+  const [allProducts, setAllProducts] = useState<any[]>([]); // For client-side search suggestions
   const cartItemsCount = useSelector(selectCartItemsCount);
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
@@ -53,35 +56,69 @@ const Header: React.FC = () => {
     };
   }, []);
 
-    useEffect(() => {
+  // Fetch all products for client-side search
+  useEffect(() => {
+    const fetchAllProducts = async () => {
+      try {
+        // Fetch products from all categories
+        const categoriesResponse = await api.get("api/categories");
+        if (categoriesResponse.data && categoriesResponse.data.isSuccess) {
+          const categories = categoriesResponse.data.value.data || [];
+          
+          // Create an array to store all products
+          let products: any[] = [];
+          
+          // For each category, fetch its products
+          for (const category of categories) {
+            try {
+              const categoryResponse = await api.get(`/api/categories/${category.id}`);
+              if (categoryResponse.data && categoryResponse.data.isSuccess) {
+                const categoryData = categoryResponse.data.value.data;
+                if (categoryData.products && Array.isArray(categoryData.products)) {
+                  // Add products to our collection
+                  products = [...products, ...categoryData.products];
+                }
+              }
+            } catch (err) {
+              console.error(`Error fetching products for category ${category.id}:`, err);
+            }
+          }
+          
+          // Remove duplicates (in case products appear in multiple categories)
+          const uniqueProducts = Array.from(
+            new Map(products.map(item => [item.id, item])).values()
+          );
+          
+          setAllProducts(uniqueProducts);
+        }
+      } catch (err) {
+        console.error("Error fetching products for search:", err);
+      }
+    };
+
+    fetchAllProducts();
+  }, []);
+
+  useEffect(() => {
     // Initial cart fetch when component mounts
     if (isLoggedIn) {
       dispatch(fetchCartItems());
     }
-    
+
     // Listen for cart update events
     const handleCartUpdate = () => {
       if (isLoggedIn) {
         dispatch(fetchCartItems());
       }
     };
-    
-    window.addEventListener('cartUpdated', handleCartUpdate);
-    
+
+    window.addEventListener("cartUpdated", handleCartUpdate);
+
     // Clean up event listener
     return () => {
-      window.removeEventListener('cartUpdated', handleCartUpdate);
+      window.removeEventListener("cartUpdated", handleCartUpdate);
     };
   }, [dispatch, isLoggedIn]);
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Searching for:", searchQuery);
-  };
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  };
 
   // Fetch categories from API
   useEffect(() => {
@@ -111,6 +148,56 @@ const Header: React.FC = () => {
     };
 
     fetchCategories();
+  }, []);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      // Close suggestions when submitting
+      setShowSuggestions(false);
+      // Navigate to search results page with the query as a parameter
+      navigate(`/search?query=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+
+    // Only show suggestions if query has at least 2 characters
+    if (query.length >= 2) {
+      // Filter products based on search query (client-side search)
+      const filteredProducts = allProducts.filter(product => 
+        product.productName.toLowerCase().includes(query.toLowerCase())
+      ).slice(0, 5); // Limit to 5 suggestions
+      
+      setSearchSuggestions(filteredProducts);
+      setShowSuggestions(true);
+    } else {
+      setSearchSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleSuggestionClick = (productId: string, productName: string) => {
+    setSearchQuery(productName);
+    setShowSuggestions(false);
+    navigate(`/product/${productId}`);
+  };
+
+  // Handle click outside to close suggestions
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest(".search-container")) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
   return (
@@ -174,7 +261,7 @@ const Header: React.FC = () => {
           </div>
 
           {/* Search Bar - Desktop */}
-          <div className="hidden md:block flex-1 max-w-lg mx-6">
+          <div className="hidden md:block flex-1 max-w-lg mx-6 search-container">
             <form onSubmit={handleSearchSubmit} className="relative">
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -189,6 +276,36 @@ const Header: React.FC = () => {
                 />
               </div>
             </form>
+            {/* Search Suggestions Dropdown */}
+            {showSuggestions && searchSuggestions.length > 0 && (
+              <div className="absolute mt-1 w-full bg-white rounded-md shadow-lg max-h-60 overflow-y-auto z-10">
+                {searchSuggestions.map((product) => (
+                  <div
+                    key={product.id}
+                    onClick={() =>
+                      handleSuggestionClick(product.id, product.productName)
+                    }
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                  >
+                    {product.productImage && (
+                      <img
+                        src={product.productImage}
+                        alt={product.productName}
+                        className="h-8 w-8 object-cover rounded-sm mr-2"
+                      />
+                    )}
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {product.productName}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {product.price.toLocaleString()} VNĐ
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Navigation - Desktop */}
@@ -297,6 +414,36 @@ const Header: React.FC = () => {
                     placeholder="Search for items..."
                   />
                 </div>
+                {/* Mobile Search Suggestions */}
+                {showSuggestions && searchSuggestions.length > 0 && (
+                  <div className="absolute mt-1 w-full bg-white rounded-md shadow-lg max-h-60 overflow-y-auto z-10">
+                    {searchSuggestions.map((product) => (
+                      <div
+                        key={product.id}
+                        onClick={() =>
+                          handleSuggestionClick(product.id, product.productName)
+                        }
+                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                      >
+                        {product.productImage && (
+                          <img
+                            src={product.productImage}
+                            alt={product.productName}
+                            className="h-8 w-8 object-cover rounded-sm mr-2"
+                          />
+                        )}
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {product.productName}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {product.price.toLocaleString()} VNĐ
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </form>
 
               {/* Categories - Mobile */}
@@ -347,7 +494,7 @@ const Header: React.FC = () => {
                 onClick={handleSell}
                 className="w-full bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-full font-medium transition-colors duration-200 mb-2"
               >
-                Đăng Bài
+                Đăng Bán
               </button>
 
               {isLoggedIn ? (
