@@ -65,6 +65,7 @@ const Admin: React.FC = () => {
     setShowUserDetailsModal,
     selectedUser,
     loadingUserDetails,
+    getPaymentStatusBadgeClass,
     handleUserAction,
     handleViewUserDetails,
     handleProductAction,
@@ -838,43 +839,74 @@ const Admin: React.FC = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {orders.length > 0 ? (
                   orders.map((order) => (
-                    <tr key={order.id} className="hover:bg-gray-50">
+                    <tr
+                      key={order.id || `order-${Math.random()}`}
+                      className="hover:bg-gray-50"
+                    >
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
-                        #{order.id.substring(0, 8)}...
+                        #{order.id ? order.id.substring(0, 8) : "N/A"}...
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
-                          {order.productName}
+                          {order.orderDetails && order.orderDetails.length > 0
+                            ? order.orderDetails[0].productName
+                            : "N/A"}{" "}
                         </div>
                         <div className="text-sm text-gray-500">
-                          ID: {order.productId.substring(0, 8)}...
+                          ID:{" "}
+                          {order.orderDetails &&
+                          order.orderDetails.length > 0 &&
+                          order.orderDetails[0].productId
+                            ? order.orderDetails[0].productId.substring(0, 8)
+                            : "N/A"}
+                          ...
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <img
                           src={
-                            order.productImage ||
-                            "https://via.placeholder.com/60x60?text=No+Image"
+                            order.orderDetails && order.orderDetails.length > 0
+                              ? order.orderDetails[0].productImage
+                              : "https://via.placeholder.com/60x60?text=No+Image"
                           }
-                          alt={order.productName}
+                          alt={
+                            order.orderDetails && order.orderDetails.length > 0
+                              ? order.orderDetails[0].productName
+                              : "Product"
+                          }
                           className="w-12 h-12 rounded-lg object-cover"
                         />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {order.quantity}
+                        {order.orderDetails && order.orderDetails.length > 0
+                          ? order.orderDetails[0].quantity
+                          : 0}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {order.unitPrice?.toLocaleString() || 0} VNĐ
+                        {order.orderDetails && order.orderDetails.length > 0
+                          ? `${order.orderDetails[0].unitPrice.toLocaleString()} VNĐ`
+                          : "0 VNĐ"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-amber-800">
-                        {order.totalPrice?.toLocaleString() || 0} VNĐ
+                        {order.totalAmount
+                          ? `${order.totalAmount.toLocaleString()} VNĐ`
+                          : "0 VNĐ"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center space-x-2">
                           <button
-                            onClick={() => handleViewOrderDetails(order.id)}
-                            className="p-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200"
-                            title="Xem chi tiết"
+                            onClick={() =>
+                              order.id && handleViewOrderDetails(order.id)
+                            }
+                            disabled={!order.id}
+                            className={`p-1 rounded ${
+                              order.id
+                                ? "bg-blue-100 text-blue-600 hover:bg-blue-200"
+                                : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                            }`}
+                            title={
+                              order.id ? "Xem chi tiết" : "Không có ID đơn hàng"
+                            }
                           >
                             <Eye className="h-4 w-4" />
                           </button>
@@ -978,9 +1010,9 @@ const Admin: React.FC = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Mã đơn hàng
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Khách hàng
-                  </th>
+                  </th> */}
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Phương thức
                   </th>
@@ -1008,17 +1040,17 @@ const Admin: React.FC = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         #{payment.orderId?.substring(0, 8)}...
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {payment.customerName}
-                      </td>
+                      </td> */}
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {payment.paymentMethod}
+                        {payment.paymentGateway}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-amber-800">
                         {payment.amount?.toLocaleString()} VNĐ
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {new Date(payment.paymentDate).toLocaleDateString(
+                        {new Date(payment.createdAt).toLocaleDateString(
                           "vi-VN"
                         )}
                       </td>

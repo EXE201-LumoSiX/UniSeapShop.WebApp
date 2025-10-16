@@ -751,7 +751,7 @@ export const useDashboardStore = () => {
       throw err;
     }
   };
-    const handleCancelPayment = async (paymentId: string, reason?: string) => {
+  const handleCancelPayment = async (paymentId: string, reason?: string) => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -759,7 +759,7 @@ export const useDashboardStore = () => {
       }
 
       const payload = {
-        reason: reason || "Cancelled by admin"
+        reason: reason || "Cancelled by admin",
       };
 
       const response = await api.post(
@@ -782,13 +782,11 @@ export const useDashboardStore = () => {
               : payment
           )
         );
-        
+
         alert("Payment cancelled successfully");
         return true;
       } else {
-        throw new Error(
-          response.data.message || "Failed to cancel payment"
-        );
+        throw new Error(response.data.message || "Failed to cancel payment");
       }
     } catch (err) {
       console.error("Error cancelling payment:", err);
@@ -797,6 +795,22 @@ export const useDashboardStore = () => {
     }
   };
 
+  const getPaymentStatusBadgeClass = (status) => {
+    switch (status) {
+      case "Completed":
+        return "bg-green-100 text-green-800";
+      case "Pending":
+        return "bg-yellow-100 text-yellow-800";
+      case "Failed":
+        return "bg-red-100 text-red-800";
+      case "Refunded":
+        return "bg-blue-100 text-blue-800";
+      case "Cancelled":
+        return "bg-gray-100 text-gray-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
 
   // Return all the state and handlers for use in the Dashboard component
   return {
@@ -844,6 +858,7 @@ export const useDashboardStore = () => {
     selectedOrder,
     setSelectedOrder,
     loadingOrderDetails,
+    getPaymentStatusBadgeClass,
     // Handlers
     handleUserAction,
     handleViewUserDetails,
