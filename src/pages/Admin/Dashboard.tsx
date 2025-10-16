@@ -25,6 +25,7 @@ import {
   CreditCard,
   ReceiptText,
 } from "lucide-react";
+import { toMediaUrl } from "../../helpers/image";
 
 const Admin: React.FC = () => {
   const {
@@ -717,10 +718,10 @@ const Admin: React.FC = () => {
             className="bg-white rounded-xl shadow-md overflow-hidden"
           >
             <img
-              src={
+              src={toMediaUrl(
                 product.productImage ||
-                "https://via.placeholder.com/300x200?text=No+Image"
-              }
+                  "https://via.placeholder.com/300x200?text=No+Image"
+              )}
               alt={product.productName}
               className="w-full h-48 object-cover"
             />
@@ -864,11 +865,11 @@ const Admin: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <img
-                          src={
+                          src={toMediaUrl(
                             order.orderDetails && order.orderDetails.length > 0
                               ? order.orderDetails[0].productImage
                               : "https://via.placeholder.com/60x60?text=No+Image"
-                          }
+                          )}
                           alt={
                             order.orderDetails && order.orderDetails.length > 0
                               ? order.orderDetails[0].productName
