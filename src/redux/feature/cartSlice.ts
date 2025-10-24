@@ -1,6 +1,6 @@
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import api from '../../config/axios';
+import { fetchCartItems } from './cartActions';
 
 // Define the CartItem type if not already defined
 interface Product {
@@ -62,6 +62,17 @@ const cartSlice = createSlice({
       state.items = [];
     }
   },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchCartItems.fulfilled, (state, action) => {
+        // Update cart items when fetch is successful
+        state.items = action.payload.items;
+      })
+      .addCase(fetchCartItems.rejected, (_state, action) => {
+        // Handle error if needed
+        console.error('Failed to fetch cart items:', action.payload);
+      });
+  }
 });
 
 export const { 

@@ -4,7 +4,6 @@ import { useParams, useLocation, useNavigate } from "react-router-dom";
 import api from "../../config/axios";
 import { ChevronLeft, Filter, Search, Heart } from "lucide-react";
 import { removeDiacritics } from "../../utils/stringUtils";
-import { toMediaUrl } from '../../helpers/image';
 
 interface Product {
   id: string;
@@ -202,7 +201,7 @@ const ProductByCategory: React.FC = () => {
               {/* Image */}
               <div className="relative overflow-hidden">
                 <img
-                  src={toMediaUrl(product.productImage)}
+                  src={product.productImage}
                   alt={product.productName}
                   className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                 />

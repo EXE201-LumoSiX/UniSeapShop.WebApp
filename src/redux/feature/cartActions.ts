@@ -20,9 +20,13 @@ export const fetchCartItems = createAsyncThunk(
             productName: item.productName,
             price: item.price,
             productImage: item.productImage || '',
-            // Add other product fields as needed
+            quantity: item.productQuantity || 10, // Available stock
+            category: item.categoryName || 'Uncategorized',
+            condition: item.usageHistory || 'Used',
+            seller: item.supplierName || 'Unknown',
+            location: 'Việt Nam'
           },
-          quantity: item.quantity,
+          quantity: item.quantity, // Cart quantity
           addedAt: new Date().toISOString(),
           isChecked: item.isCheck || false
         })) || [];

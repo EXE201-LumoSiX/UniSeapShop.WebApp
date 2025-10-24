@@ -21,6 +21,7 @@ import SearchResults from "./pages/SearchResult";
 import RegisterSupplier from "./pages/Suplier/RegisterSupplier";
 import PaymentSuccess from "./pages/Payment/PaymentSuccess";
 import PaymentFailed from "./pages/Payment/PaymentFailed";
+import SupplierDetail from "./pages/Suplier/SupplierDetail";
 
 const App: React.FC = () => {
   const handleLogin = () => {
@@ -57,6 +58,14 @@ const App: React.FC = () => {
         <Route path="/register-supplier" element={<RegisterSupplier />} />
         <Route path="/success-payment" element={<PaymentSuccess />} />
         <Route path="/failed-payment" element={<PaymentFailed />} />
+        <Route 
+          path="/supplierid/:id" 
+          element={
+            <Layout>
+              <SupplierDetail />
+            </Layout>
+          } 
+        />
         <Route
           path="/category/:categoryName"
           element={

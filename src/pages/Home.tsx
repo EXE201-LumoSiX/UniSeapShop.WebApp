@@ -3,7 +3,6 @@ import api from '../config/axios';
 import Hero from '../components/Hero';
 import { useNavigationHandlers } from "../utils/navigationHandlers";
 import { Heart } from "lucide-react";
-import { toMediaUrl } from '../helpers/image';
 
 
 const Home: React.FC = () => {
@@ -106,7 +105,7 @@ const Home: React.FC = () => {
                     {/* Image */}
                     <div className="relative overflow-hidden">
                       <img
-                        src={toMediaUrl(product.productImage)}
+                        src={product.productImage}
                         alt={product.productName}
                         className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                       />

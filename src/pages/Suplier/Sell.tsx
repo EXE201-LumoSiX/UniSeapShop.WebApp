@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Upload, DollarSign, Percent } from "lucide-react";
+import { Upload, DollarSign, Percent, Home } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import api from "../../config/axios";
 import RegisterSupplier from "./RegisterSupplier";
@@ -255,12 +255,23 @@ const Sell: React.FC = () => {
       <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-lg">
         {/* Header */}
         <div className="bg-gradient-to-r from-amber-100 to-yellow-100 p-6 rounded-t-2xl border-b">
-          <h1 className="text-3xl font-bold text-amber-900">
-            Đăng bán sản phẩm
-          </h1>
-          <p className="text-amber-700 mt-2">
-            Điền thông tin chi tiết về sản phẩm bạn muốn bán
-          </p>
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold text-amber-900">
+                Đăng bán sản phẩm
+              </h1>
+              <p className="text-amber-700 mt-2">
+                Điền thông tin chi tiết về sản phẩm bạn muốn bán
+              </p>
+            </div>
+            <button
+              onClick={() => navigate("/")}
+              className="flex items-center gap-2 bg-amber-900 hover:bg-amber-800 text-white px-5 py-2.5 rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 whitespace-nowrap"
+            >
+              <Home className="h-5 w-5" />
+              <span>Về trang chủ</span>
+            </button>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="p-8 space-y-8">

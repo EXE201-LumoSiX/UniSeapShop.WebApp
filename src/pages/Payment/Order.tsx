@@ -20,7 +20,6 @@ import {
   clearCart,
 } from "../../redux/feature/cartSlice";
 import api from "../../config/axios";
-import { toMediaUrl } from '../../helpers/image';
 
 
 // Define payment methods
@@ -478,7 +477,7 @@ const Order: React.FC = () => {
                   >
                     <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
                       <img
-                        src={toMediaUrl(item.product.productImage)}
+                        src={item.product.productImage}
                         alt={item.product.productName}
                         className="h-full w-full object-cover object-center"
                       />

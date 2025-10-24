@@ -239,12 +239,13 @@ const Header: React.FC = () => {
                     categories.map((category) => (
                       <button
                         key={category.id}
-                        onClick={() =>
+                        onClick={() => {
                           handleCategoryClick(
                             category.id,
                             category.categoryName
-                          )
-                        }
+                          );
+                          setIsCategoryMenuOpen(false);
+                        }}
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       >
                         {category.categoryName}
@@ -470,12 +471,13 @@ const Header: React.FC = () => {
                       categories.map((category) => (
                         <button
                           key={category.id}
-                          onClick={() =>
+                          onClick={() => {
                             handleCategoryClick(
                               category.id,
                               category.categoryName
-                            )
-                          }
+                            );
+                            setIsCategoryMenuOpen(false);
+                          }}
                           className="block w-full text-left text-gray-700 hover:text-amber-800 px-3 py-2 rounded-md text-sm"
                         >
                           {category.categoryName}

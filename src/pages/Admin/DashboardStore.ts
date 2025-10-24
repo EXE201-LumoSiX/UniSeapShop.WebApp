@@ -381,7 +381,6 @@ export const useDashboardStore = () => {
 
         if (response.data && response.data.isSuccess) {
           setUsers(users.filter((user) => user.id !== userId));
-          alert("Xóa người dùng thành công!");
         } else {
           throw new Error(
             response.data.error.message || "Failed to delete user"

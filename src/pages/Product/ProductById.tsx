@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../../config/axios";
 import { Heart } from "lucide-react";
-import { toMediaUrl } from '../../helpers/image';
 
 interface ProductDetail {
   id: string;
@@ -12,6 +11,7 @@ interface ProductDetail {
   description?: string;
   categoryName?: string;
   quantity?: number;
+  productCondition?: string;
   supplierName?: string;
 }
 
@@ -87,6 +87,7 @@ const ProductById: React.FC = () => {
           description: productData.description || "Không có mô tả chi tiết.",
           categoryName: productData.categoryName || "Chưa phân loại",
           quantity: productData.quantity || 0,
+          productCondition: productData.productCondition || "Không xác định",
           supplierName: productData.supplierName || "Không xác định",
         });
       } catch (err: any) {
@@ -125,7 +126,12 @@ const ProductById: React.FC = () => {
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value);
     if (!isNaN(value) && value > 0) {
-      setQuantity(value);
+      // Check if the value doesn't exceed available stock
+      if (product && product.quantity && value <= product.quantity) {
+        setQuantity(value);
+      } else if (product && product.quantity) {
+        setQuantity(product.quantity);
+      }
     }
   };
 
@@ -136,7 +142,10 @@ const ProductById: React.FC = () => {
   };
 
   const increaseQuantity = () => {
-    setQuantity(quantity + 1);
+    // Check if we can increase based on available stock
+    if (product && product.quantity && quantity < product.quantity) {
+      setQuantity(quantity + 1);
+    }
   };
 
   const toggleFavorite = () => {
@@ -258,7 +267,7 @@ const ProductById: React.FC = () => {
             <div className="bg-white rounded-xl overflow-hidden shadow-md border border-gray-200">
               {product.productImage ? (
                 <img
-                  src={toMediaUrl(product.productImage)}
+                  src={product.productImage}
                   alt={product.productName}
                   className="w-full h-auto object-cover aspect-square"
                   onError={handleImageError}
@@ -306,9 +315,12 @@ const ProductById: React.FC = () => {
                 </div>
                 <div>
                   <span className="text-gray-600">Người bán:</span>
-                  <span className="ml-2 text-gray-900">
+                  <a
+                    className="ml-2 text-gray-900"
+                    href={`/supplierid/${product.supplierId}`}
+                  >
                     {product.supplierName}
-                  </span>
+                  </a>
                 </div>
                 <div>
                   <span className="text-gray-600">Tình trạng:</span>
@@ -322,6 +334,12 @@ const ProductById: React.FC = () => {
                     {product.quantity && product.quantity > 0
                       ? "Còn hàng"
                       : "Hết hàng"}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Trạng thái sản phẩm:</span>
+                  <span className="ml-2 text-green-600">
+                    {product.productCondition}
                   </span>
                 </div>
               </div>
