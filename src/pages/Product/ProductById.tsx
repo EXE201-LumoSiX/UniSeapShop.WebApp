@@ -13,6 +13,7 @@ interface ProductDetail {
   quantity?: number;
   productCondition?: string;
   supplierName?: string;
+  supplierId?: string;
 }
 
 const ProductById: React.FC = () => {
@@ -89,6 +90,7 @@ const ProductById: React.FC = () => {
           quantity: productData.quantity || 0,
           productCondition: productData.productCondition || "Không xác định",
           supplierName: productData.supplierName || "Không xác định",
+          supplierId: productData.supplierId || "",
         });
       } catch (err: any) {
         console.error("Error fetching product details:", err);
@@ -316,7 +318,7 @@ const ProductById: React.FC = () => {
                 <div>
                   <span className="text-gray-600">Người bán:</span>
                   <a
-                    className="ml-2 text-gray-900"
+                    className="ml-2 text-gray-900 underline hover:text-amber-600"
                     href={`/supplierid/${product.supplierId}`}
                   >
                     {product.supplierName}

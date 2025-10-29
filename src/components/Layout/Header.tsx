@@ -343,10 +343,10 @@ const Header: React.FC = () => {
                       Thông tin
                     </a>
                     <a
-                      href="#"
+                      href="/sold-products"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
-                      Mua hàng
+                      Sản phẩm đã bán
                     </a>
                     <a
                       href="#"
@@ -502,16 +502,16 @@ const Header: React.FC = () => {
               {isLoggedIn ? (
                 <div className="space-y-2">
                   <a
-                    href="#"
+                    href="/profile"
                     className="block text-gray-700 hover:text-amber-800 px-3 py-2 rounded-md text-base font-medium"
                   >
                     Thông tin
                   </a>
                   <a
-                    href="#"
+                    href="/sold-products"
                     className="block text-gray-700 hover:text-amber-800 px-3 py-2 rounded-md text-base font-medium"
                   >
-                    Mua hàng
+                    Sản phẩm đã bán
                   </a>
                   <a
                     href="#"

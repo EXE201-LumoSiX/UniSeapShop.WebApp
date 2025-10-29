@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   User,
   MapPin,
@@ -6,6 +7,8 @@ import {
   Camera,
   Mail,
   Phone,
+  ArrowLeft,
+  Home,
 } from "lucide-react";
 import api from "../../config/axios";
 
@@ -20,6 +23,7 @@ interface UserProfile {
 }
 
 const Profile: React.FC = () => {
+  const navigate = useNavigate();
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,6 +33,22 @@ const Profile: React.FC = () => {
     phoneNumber: "",
     location: "",
   });
+
+  const extractErrorMessage = (e: unknown, fallback: string) => {
+    if (typeof e === "object" && e !== null) {
+      const errObj = e as {
+        message?: string;
+        response?: { data?: { error?: { message?: string }; message?: string } };
+      };
+      return (
+        errObj.response?.data?.error?.message ||
+        errObj.response?.data?.message ||
+        errObj.message ||
+        fallback
+      );
+    }
+    return fallback;
+  };
 
   useEffect(() => {
     const getUserProfile = async () => {
@@ -130,10 +150,12 @@ const Profile: React.FC = () => {
       } else {
         throw new Error(response.data.message || "Failed to update profile");
       }
-    } catch (error) {
+    } catch (err) {
       setError(
-        error.response?.data?.error?.message ||
+        extractErrorMessage(
+          err,
           "Không thể cập nhật thông tin người dùng. Vui lòng thử lại sau."
+        )
       );
     } finally {
       setIsLoading(false);
@@ -190,10 +212,12 @@ const Profile: React.FC = () => {
       } else {
         throw new Error(response.data.message || "Failed to upload avatar");
       }
-    } catch (error) {
+    } catch (err) {
       setError(
-        error.response?.data?.error?.message ||
+        extractErrorMessage(
+          err,
           "Không thể cập nhật ảnh đại diện. Vui lòng thử lại sau."
+        )
       );
     } finally {
       setIsLoading(false);
@@ -246,6 +270,16 @@ const Profile: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 to-yellow-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
+        {/* Back and Home Buttons */}
+        <div className="mb-6 flex items-center justify-end">
+          <button
+            onClick={() => navigate("/")}
+            className="bg-amber-900 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center"
+          >
+            <Home className="h-5 w-5 mr-2" />
+            Trang chủ
+          </button>
+        </div>
         {/* Profile Header */}
         <div className="bg-white rounded-xl shadow-md p-6 mb-6">
           <div className="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-6">

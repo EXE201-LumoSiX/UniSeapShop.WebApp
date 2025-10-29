@@ -447,11 +447,11 @@ const Sell: React.FC = () => {
                 <input
                   type="number"
                   name="Discount"
-                  value={formData.Discount || ""}
+                  value={formData.Discount}
                   onChange={handleInputChange}
                   className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-500 text-lg"
-                  placeholder="Nhập % giảm giá"
-                  min="-1"
+                  placeholder="0"
+                  min="0"
                   max="100"
                 />
               </div>

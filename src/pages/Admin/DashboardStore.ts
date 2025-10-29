@@ -10,6 +10,7 @@ export const useDashboardStore = () => {
     | "products"
     | "orders"
     | "payments"
+    | "payouts"
     | "settings"
   >("dashboard");
   const [searchTerm, setSearchTerm] = useState("");
@@ -40,6 +41,11 @@ export const useDashboardStore = () => {
   const [paymentStatusFilter, setPaymentStatusFilter] = useState("all");
   const [paymentFromDate, setPaymentFromDate] = useState("");
   const [paymentToDate, setPaymentToDate] = useState("");
+  const [payouts, setPayouts] = useState<any[]>([]);
+  const [payoutStatusFilter, setPayoutStatusFilter] = useState("all");
+  const [showPayoutDetailsModal, setShowPayoutDetailsModal] = useState(false);
+  const [selectedPayout, setSelectedPayout] = useState<any>(null);
+  const [loadingPayoutDetails, setLoadingPayoutDetails] = useState(false);
 
   // Dashboard stats - these could be fetched from API in the future
   const [stats, setStats] = useState({
@@ -61,7 +67,6 @@ export const useDashboardStore = () => {
         usersResponse,
         productsResponse,
         ordersResponse,
-        paymentsResponse,
       ] = await Promise.all([
         api.get("api/User", {
           headers: { Authorization: `Bearer ${token}` },
@@ -70,9 +75,6 @@ export const useDashboardStore = () => {
           headers: { Authorization: `Bearer ${token}` },
         }),
         api.get("api/orders", {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        api.get("api/payments", {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
@@ -360,6 +362,43 @@ export const useDashboardStore = () => {
 
     fetchPayments();
   }, [activeTab, paymentStatusFilter, paymentFromDate, paymentToDate]);
+
+  // Fetch payouts from API
+  useEffect(() => {
+    const fetchPayouts = async () => {
+      if (activeTab === "payouts") {
+        setIsLoading(true);
+        setError(null);
+        try {
+          const token = localStorage.getItem("token");
+          if (!token) {
+            throw new Error("No authentication token found");
+          }
+
+          const response = await api.get("api/Payout", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (response.data && response.data.isSuccess) {
+            setPayouts(response.data.value.data || []);
+          } else {
+            throw new Error(
+              response.data.message || "Failed to fetch payouts"
+            );
+          }
+        } catch (err) {
+          console.error("Error fetching payouts:", err);
+          setError("Failed to load payouts. Please try again later.");
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchPayouts();
+  }, [activeTab, payoutStatusFilter]);
 
   // User actions (activate, deactivate, delete)
   const handleUserAction = async (
@@ -794,7 +833,7 @@ export const useDashboardStore = () => {
     }
   };
 
-  const getPaymentStatusBadgeClass = (status) => {
+  const getPaymentStatusBadgeClass = (status: string) => {
     switch (status) {
       case "Completed":
         return "bg-green-100 text-green-800";
@@ -808,6 +847,169 @@ export const useDashboardStore = () => {
         return "bg-gray-100 text-gray-800";
       default:
         return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  // Payout actions
+  const handleViewPayoutDetails = async (payoutId: string) => {
+    if (!payoutId) {
+      alert("Invalid payout ID");
+      return;
+    }
+    setLoadingPayoutDetails(true);
+    setShowPayoutDetailsModal(true);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      const response = await api.get(`api/Payout/${payoutId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.data && response.data.isSuccess) {
+        setSelectedPayout(response.data.value.data);
+      } else {
+        throw new Error(
+          response.data.message || "Failed to fetch payout details"
+        );
+      }
+    } catch (err) {
+      console.error("Error fetching payout details:", err);
+      alert("Không thể tải thông tin chi tiết. Vui lòng thử lại sau.");
+      setShowPayoutDetailsModal(false);
+    } finally {
+      setLoadingPayoutDetails(false);
+    }
+  };
+
+  const handleUpdatePayoutStatus = async (payoutId: string, newStatus: string) => {
+    if (!confirm(`Bạn có chắc chắn muốn ${newStatus === "Completed" ? "duyệt" : "từ chối"} yêu cầu rút tiền này?`)) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      const response = await api.put(
+        `api/Payout/${payoutId}`,
+        JSON.stringify(newStatus),
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.data && response.data.isSuccess) {
+        // Update the payout status in the payouts list
+        setPayouts(
+          payouts.map((payout) =>
+            payout.id === payoutId
+              ? { ...payout, status: newStatus }
+              : payout
+          )
+        );
+
+        // Update selected payout if it's the one being viewed
+        if (selectedPayout && selectedPayout.id === payoutId) {
+          setSelectedPayout({ ...selectedPayout, status: newStatus });
+        }
+
+        alert(`Đã ${newStatus === "Completed" ? "duyệt" : "từ chối"} yêu cầu rút tiền thành công!`);
+        setShowPayoutDetailsModal(false);
+        return true;
+      } else {
+        throw new Error(
+          response.data.message || "Failed to update payout status"
+        );
+      }
+    } catch (err) {
+      console.error("Error updating payout status:", err);
+      alert("Không thể cập nhật trạng thái. Vui lòng thử lại.");
+      return false;
+    }
+  };
+
+  const handleApprovePayout = async (orderId: string) => {
+    if (!confirm("Bạn có chắc chắn muốn duyệt yêu cầu rút tiền này?")) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      const response = await api.post(
+        "api/Payout",
+        JSON.stringify(orderId),
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.data && response.data.isSuccess) {
+        // Update the payout status in the payouts list
+        setPayouts(
+          payouts.map((payout) =>
+            payout.orderID === orderId
+              ? { ...payout, status: "Completed" }
+              : payout
+          )
+        );
+
+        alert("Đã duyệt yêu cầu rút tiền thành công!");
+        return true;
+      } else {
+        throw new Error(
+          response.data.message || "Failed to approve payout"
+        );
+      }
+    } catch (err) {
+      console.error("Error approving payout:", err);
+      alert("Không thể duyệt yêu cầu rút tiền. Vui lòng thử lại.");
+      return false;
+    }
+  };
+
+  const handleRejectPayout = async (payoutId: string) => {
+    if (!confirm("Bạn có chắc chắn muốn từ chối yêu cầu rút tiền này?")) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      // Update the payout status to rejected
+      setPayouts(
+        payouts.map((payout) =>
+          payout.id === payoutId
+            ? { ...payout, status: "Rejected" }
+            : payout
+        )
+      );
+
+      alert("Đã từ chối yêu cầu rút tiền!");
+      return true;
+    } catch (err) {
+      console.error("Error rejecting payout:", err);
+      alert("Không thể từ chối yêu cầu rút tiền. Vui lòng thử lại.");
+      return false;
     }
   };
 
@@ -829,6 +1031,9 @@ export const useDashboardStore = () => {
     setPaymentFromDate,
     paymentToDate,
     setPaymentToDate,
+    payouts,
+    payoutStatusFilter,
+    setPayoutStatusFilter,
     isLoading,
     error,
     stats,
@@ -857,6 +1062,11 @@ export const useDashboardStore = () => {
     selectedOrder,
     setSelectedOrder,
     loadingOrderDetails,
+    showPayoutDetailsModal,
+    setShowPayoutDetailsModal,
+    selectedPayout,
+    setSelectedPayout,
+    loadingPayoutDetails,
     getPaymentStatusBadgeClass,
     // Handlers
     handleUserAction,
@@ -869,5 +1079,9 @@ export const useDashboardStore = () => {
     handleViewOrderDetails,
     handleUpdateStatusPayment,
     handleCancelPayment,
+    handleViewPayoutDetails,
+    handleUpdatePayoutStatus,
+    handleApprovePayout,
+    handleRejectPayout,
   };
 };

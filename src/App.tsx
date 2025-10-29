@@ -22,10 +22,11 @@ import RegisterSupplier from "./pages/Suplier/RegisterSupplier";
 import PaymentSuccess from "./pages/Payment/PaymentSuccess";
 import PaymentFailed from "./pages/Payment/PaymentFailed";
 import SupplierDetail from "./pages/Suplier/SupplierDetail";
+import SoldProducts from "./pages/Suplier/SoldProducts";
 
 const App: React.FC = () => {
   const handleLogin = () => {
-    console.log("User logged in t");
+    console.log("User logged in");
   };
 
   return (
@@ -58,13 +59,14 @@ const App: React.FC = () => {
         <Route path="/register-supplier" element={<RegisterSupplier />} />
         <Route path="/success-payment" element={<PaymentSuccess />} />
         <Route path="/failed-payment" element={<PaymentFailed />} />
-        <Route 
-          path="/supplierid/:id" 
+        <Route path="/sold-products" element={<SoldProducts />} />
+        <Route
+          path="/supplierid/:id"
           element={
             <Layout>
               <SupplierDetail />
             </Layout>
-          } 
+          }
         />
         <Route
           path="/category/:categoryName"
@@ -88,14 +90,7 @@ const App: React.FC = () => {
         </Route>
         {/* Routes cho Buyer */}
         <Route element={<ProtectedRoute allowedRoles={["User"]} />}>
-          <Route
-            path="/profile"
-            element={
-              <Layout>
-                <Profile />
-              </Layout>
-            }
-          />
+          <Route path="/profile" element={<Profile />} />
         </Route>
 
         {/* Routes cho Seller */}

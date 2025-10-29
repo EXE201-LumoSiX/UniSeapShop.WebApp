@@ -7,10 +7,16 @@ import {
   Store,
   Package,
   Clock,
+  Mail,
+  Phone,
+  User,
 } from "lucide-react";
 import api from "../../config/axios";
 
 interface SupplierDetail {
+  fullName: string;
+  email: string;
+  phone: string;
   description: string;
   location: string;
   rating: number;
@@ -66,11 +72,15 @@ const SupplierDetail: React.FC = () => {
         let errorMessage =
           "Không thể tải thông tin nhà cung cấp. Vui lòng thử lại sau.";
 
-        if (err && typeof err === 'object' && 'response' in err) {
-          const error = err as { response?: { status?: number; data?: { message?: string } }; request?: unknown };
+        if (err && typeof err === "object" && "response" in err) {
+          const error = err as {
+            response?: { status?: number; data?: { message?: string } };
+            request?: unknown;
+          };
           if (error.response) {
             if (error.response.status === 401) {
-              errorMessage = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+              errorMessage =
+                "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
               localStorage.removeItem("token");
               navigate("/login", { state: { from: `/supplierid/${id}` } });
             } else if (error.response.status === 404) {
@@ -107,18 +117,13 @@ const SupplierDetail: React.FC = () => {
 
     if (hasHalfStar) {
       stars.push(
-        <Star
-          key="half"
-          className="h-5 w-5 fill-yellow-200 text-yellow-400"
-        />
+        <Star key="half" className="h-5 w-5 fill-yellow-200 text-yellow-400" />
       );
     }
 
     const emptyStars = 5 - Math.ceil(rating);
     for (let i = 0; i < emptyStars; i++) {
-      stars.push(
-        <Star key={`empty-${i}`} className="h-5 w-5 text-gray-300" />
-      );
+      stars.push(<Star key={`empty-${i}`} className="h-5 w-5 text-gray-300" />);
     }
 
     return stars;
@@ -186,13 +191,22 @@ const SupplierDetail: React.FC = () => {
                 </div>
                 <div>
                   <h1 className="text-3xl font-bold text-amber-900 mb-2">
-                    Thông tin nhà cung cấp
+                    {supplier.fullName}
                   </h1>
                   <div className="flex items-center space-x-2">
                     {renderStars(supplier.rating)}
                     <span className="text-lg font-semibold text-amber-800 ml-2">
                       {supplier.rating.toFixed(1)}
                     </span>
+                    <p className="text-sm text-amber-600">
+                      {supplier.rating === 5
+                        ? "Xuất sắc"
+                        : supplier.rating >= 4
+                        ? "Rất tốt"
+                        : supplier.rating >= 3
+                        ? "Tốt"
+                        : "Trung bình"}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -233,7 +247,7 @@ const SupplierDetail: React.FC = () => {
               {/* Stats & Info Section */}
               <div className="space-y-6">
                 {/* Rating Card */}
-                <div className="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-lg p-6 border border-yellow-200">
+                {/* <div className="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-lg p-6 border border-yellow-200">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">
                     Đánh giá
                   </h3>
@@ -256,17 +270,43 @@ const SupplierDetail: React.FC = () => {
                       </p>
                     </div>
                   </div>
-                </div>
+                </div> */}
 
                 {/* Additional Info */}
                 <div className="bg-gray-50 rounded-lg p-6 border border-gray-200 space-y-4">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">
                     Thông tin liên hệ
                   </h3>
-                  
+
+                  {/* <div className="flex items-center space-x-3 text-gray-700">
+                    <User className="h-5 w-5 text-amber-600 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm text-gray-500">Họ và tên</p>
+                      <p className="font-medium">{supplier.fullName}</p>
+                    </div>
+                  </div> */}
+
                   <div className="flex items-center space-x-3 text-gray-700">
-                    <Clock className="h-5 w-5 text-amber-600" />
-                    <span>Hoạt động hàng ngày</span>
+                    <Mail className="h-5 w-5 text-amber-600 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm text-gray-500">Email</p>
+                      <p className="font-medium break-all">{supplier.email}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-3 text-gray-700">
+                    <Phone className="h-5 w-5 text-amber-600 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm text-gray-500">Số điện thoại</p>
+                      <p className="font-medium">{supplier.phone}</p>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-gray-200 mt-4">
+                    <div className="flex items-center space-x-3 text-gray-700">
+                      <Clock className="h-5 w-5 text-amber-600" />
+                      <span>Hoạt động hàng ngày</span>
+                    </div>
                   </div>
 
                   <div className="flex items-center space-x-3 text-gray-700">

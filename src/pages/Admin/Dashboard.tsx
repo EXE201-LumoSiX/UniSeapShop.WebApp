@@ -18,12 +18,9 @@ import {
   Mail,
   Phone,
   CheckCircle,
-  XCircle,
-  RefreshCw,
-  Clock,
-  DollarSign,
   CreditCard,
   ReceiptText,
+  XCircle,
 } from "lucide-react";
 
 const Admin: React.FC = () => {
@@ -43,6 +40,9 @@ const Admin: React.FC = () => {
     setPaymentFromDate,
     paymentToDate,
     setPaymentToDate,
+    payouts,
+    payoutStatusFilter,
+    setPayoutStatusFilter,
     isLoading,
     error,
     stats,
@@ -65,6 +65,10 @@ const Admin: React.FC = () => {
     setShowUserDetailsModal,
     selectedUser,
     loadingUserDetails,
+    showPayoutDetailsModal,
+    setShowPayoutDetailsModal,
+    selectedPayout,
+    loadingPayoutDetails,
     getPaymentStatusBadgeClass,
     handleUserAction,
     handleViewUserDetails,
@@ -74,8 +78,8 @@ const Admin: React.FC = () => {
     handleEditCategory,
     handleDeleteCategory,
     handleViewOrderDetails,
-    handleUpdateStatusPayment,
-    handleCancelPayment,
+    handleViewPayoutDetails,
+    handleUpdatePayoutStatus,
   } = useDashboardStore();
 
   const { handleLogout } = useNavigationHandlers();
@@ -236,9 +240,15 @@ const Admin: React.FC = () => {
                             <div className="text-sm font-medium text-gray-900">
                               {user.username}
                             </div>
-                            <div className="text-sm text-gray-500">
-                              ID: {user.userId}
-                            </div>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="text-sm font-medium text-blue-600">
+                                #
+                                {user.userId
+                                  ? user.userId.substring(0, 8)
+                                  : "N/A"}
+                                ...
+                              </span>
+                            </td>
                           </div>
                         </div>
                       </td>
@@ -439,8 +449,11 @@ const Admin: React.FC = () => {
                 {categories.length > 0 ? (
                   categories.map((category) => (
                     <tr key={category.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {category.id}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm font-medium text-blue-600">
+                          #{category.id ? category.id.substring(0, 8) : "N/A"}
+                          ...
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
@@ -719,7 +732,7 @@ const Admin: React.FC = () => {
             <img
               src={
                 product.productImage ||
-                  "https://via.placeholder.com/300x200?text=No+Image"
+                "https://via.placeholder.com/300x200?text=No+Image"
               }
               alt={product.productName}
               className="w-full h-48 object-cover"
@@ -733,7 +746,9 @@ const Admin: React.FC = () => {
                   {product.productCondition || "N/A"}
                 </span>
               </div>
-              <p className="text-sm text-gray-600 mb-2">ID: {product.id}</p>
+              <span className="text-sm font-medium text-blue-600">
+                #{product.id ? product.id.substring(0, 8) : "N/A"}...
+              </span>
               <p className="text-sm text-gray-600 mb-2">
                 Danh mục: {product.categoryName}
               </p>
@@ -786,6 +801,9 @@ const Admin: React.FC = () => {
               className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
             >
               <option value="all">Tất cả đơn hàng</option>
+              <option value="Pending">Đang chờ</option>
+              <option value="Completed">Đã hoàn thành</option>
+              <option value="Cancelled">Đã hủy</option>
             </select>
           </div>
         </div>
@@ -831,75 +849,121 @@ const Admin: React.FC = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Tổng tiền
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Hành động
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Thao tác
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {orders.length > 0 ? (
-                  orders.map((order) => (
-                    <tr
-                      key={order.id || `order-${Math.random()}`}
-                      className="hover:bg-gray-50"
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
-                        #{order.id ? order.id.substring(0, 8) : "N/A"}...
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {order.orderDetails && order.orderDetails.length > 0
-                            ? order.orderDetails[0].productName
-                            : "N/A"}{" "}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          ID:{" "}
-                          {order.orderDetails &&
-                          order.orderDetails.length > 0 &&
-                          order.orderDetails[0].productId
-                            ? order.orderDetails[0].productId.substring(0, 8)
-                            : "N/A"}
-                          ...
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <img
-                          src={
-                            order.orderDetails && order.orderDetails.length > 0
-                              ? order.orderDetails[0].productImage
-                              : "https://via.placeholder.com/60x60?text=No+Image"
-                          }
-                          alt={
-                            order.orderDetails && order.orderDetails.length > 0
+                  orders
+                    .filter((order) => {
+                      // Filter by search term
+                      const matchesSearch =
+                        !searchTerm ||
+                        (order.id &&
+                          order.id
+                            .toLowerCase()
+                            .includes(searchTerm.toLowerCase())) ||
+                        (order.orderDetails &&
+                          order.orderDetails.some(
+                            (detail) =>
+                              detail.productName &&
+                              detail.productName
+                                .toLowerCase()
+                                .includes(searchTerm.toLowerCase())
+                          ));
+
+                      // Filter by status
+                      const matchesStatus =
+                        statusFilter === "all" || order.status === statusFilter;
+
+                      return matchesSearch && matchesStatus;
+                    })
+                    .map((order) => (
+                      <tr
+                        key={order.id || `order-${Math.random()}`}
+                        className="hover:bg-gray-50"
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm font-medium text-blue-600">
+                            #{order.id ? order.id.substring(0, 8) : "N/A"}...
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm font-medium text-gray-900">
+                            {order.orderDetails && order.orderDetails.length > 0
                               ? order.orderDetails[0].productName
-                              : "Product"
-                          }
-                          className="w-12 h-12 rounded-lg object-cover"
-                        />
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {order.orderDetails && order.orderDetails.length > 0
-                          ? order.orderDetails[0].quantity
-                          : 0}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {order.orderDetails && order.orderDetails.length > 0
-                          ? `${order.orderDetails[0].unitPrice.toLocaleString()} VNĐ`
-                          : "0 VNĐ"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-amber-800">
-                        {order.totalAmount
-                          ? `${order.totalAmount.toLocaleString()} VNĐ`
-                          : "0 VNĐ"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex items-center space-x-2">
+                              : "N/A"}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            ID:{" "}
+                            {order.orderDetails &&
+                            order.orderDetails.length > 0 &&
+                            order.orderDetails[0].productId
+                              ? order.orderDetails[0].productId.substring(0, 8)
+                              : "N/A"}
+                            ...
+                          </div>
+                          {order.orderDetails &&
+                            order.orderDetails.length > 1 && (
+                              <div className="text-xs text-gray-400 mt-1">
+                                +{order.orderDetails.length - 1} sản phẩm khác
+                              </div>
+                            )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <img
+                            src={
+                              order.orderDetails &&
+                              order.orderDetails.length > 0
+                                ? order.orderDetails[0].productImage
+                                : "https://via.placeholder.com/60x60?text=No+Image"
+                            }
+                            alt={
+                              order.orderDetails &&
+                              order.orderDetails.length > 0
+                                ? order.orderDetails[0].productName
+                                : "Product"
+                            }
+                            className="w-12 h-12 rounded-lg object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src =
+                                "https://via.placeholder.com/60x60?text=No+Image";
+                            }}
+                          />
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm font-semibold text-gray-900">
+                            {order.orderDetails && order.orderDetails.length > 0
+                              ? order.orderDetails.reduce(
+                                  (sum, detail) => sum + (detail.quantity || 0),
+                                  0
+                                )
+                              : 0}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm font-medium text-gray-900">
+                            {order.orderDetails && order.orderDetails.length > 0
+                              ? `${order.orderDetails[0].unitPrice.toLocaleString()} VNĐ`
+                              : "0 VNĐ"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm font-bold text-green-600">
+                            {order.totalAmount
+                              ? `${order.totalAmount.toLocaleString()} VNĐ`
+                              : "0 VNĐ"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
                           <button
                             onClick={() =>
                               order.id && handleViewOrderDetails(order.id)
                             }
                             disabled={!order.id}
-                            className={`p-1 rounded ${
+                            className={`p-2 rounded-lg transition-colors ${
                               order.id
                                 ? "bg-blue-100 text-blue-600 hover:bg-blue-200"
                                 : "bg-gray-100 text-gray-400 cursor-not-allowed"
@@ -908,12 +972,11 @@ const Admin: React.FC = () => {
                               order.id ? "Xem chi tiết" : "Không có ID đơn hàng"
                             }
                           >
-                            <Eye className="h-4 w-4" />
+                            <Eye className="h-5 w-5" />
                           </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
+                        </td>
+                      </tr>
+                    ))
                 ) : (
                   <tr>
                     <td
@@ -929,6 +992,35 @@ const Admin: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Summary */}
+      {orders.length > 0 && (
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 bg-blue-50 rounded-lg">
+              <p className="text-sm text-gray-600">Tổng đơn hàng</p>
+              <p className="text-2xl font-bold text-blue-600">
+                {orders.length}
+              </p>
+            </div>
+            <div className="p-4 bg-green-50 rounded-lg">
+              <p className="text-sm text-gray-600">Đã hoàn thành</p>
+              <p className="text-2xl font-bold text-green-600">
+                {orders.filter((o) => o.status === "Completed").length}
+              </p>
+            </div>
+            <div className="p-4 bg-amber-50 rounded-lg">
+              <p className="text-sm text-gray-600">Tổng doanh thu</p>
+              <p className="text-2xl font-bold text-amber-600">
+                {orders
+                  .reduce((sum, o) => sum + (o.totalAmount || 0), 0)
+                  .toLocaleString()}{" "}
+                VNĐ
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -1005,9 +1097,6 @@ const Admin: React.FC = () => {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Mã thanh toán
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Mã đơn hàng
                   </th>
                   {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1025,20 +1114,16 @@ const Admin: React.FC = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Trạng thái
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Hành động
-                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {payments && payments.length > 0 ? (
                   payments.map((payment) => (
                     <tr key={payment.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
-                        #{payment.id?.substring(0, 8)}...
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        #{payment.orderId?.substring(0, 8)}...
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm font-medium text-blue-600">
+                          #{payment.id ? payment.id.substring(0, 8) : "N/A"}...
+                        </span>
                       </td>
                       {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {payment.customerName}
@@ -1063,47 +1148,6 @@ const Admin: React.FC = () => {
                           {payment.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex items-center space-x-2">
-                          {payment.status === "Pending" && (
-                            <>
-                              <button
-                                onClick={() =>
-                                  handleUpdateStatusPayment(
-                                    payment.orderId,
-                                    "Completed"
-                                  )
-                                }
-                                className="p-1 bg-green-100 text-green-600 rounded hover:bg-green-200"
-                                title="Xác nhận thanh toán"
-                              >
-                                <CheckCircle className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => handleCancelPayment(payment.id)}
-                                className="p-1 bg-red-100 text-red-600 rounded hover:bg-red-200"
-                                title="Hủy thanh toán"
-                              >
-                                <X className="h-4 w-4" />
-                              </button>
-                            </>
-                          )}
-                          {payment.status === "Completed" && (
-                            <button
-                              onClick={() =>
-                                handleUpdateStatusPayment(
-                                  payment.orderId,
-                                  "Refunded"
-                                )
-                              }
-                              className="p-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200"
-                              title="Hoàn tiền"
-                            >
-                              <RefreshCw className="h-4 w-4" />
-                            </button>
-                          )}
-                        </div>
-                      </td>
                     </tr>
                   ))
                 ) : (
@@ -1123,6 +1167,306 @@ const Admin: React.FC = () => {
       </div>
     </div>
   );
+
+  const renderPayouts = () => (
+    <div className="space-y-6">
+      {/* Payouts Header */}
+      <div className="bg-white rounded-xl shadow-md p-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <h2 className="text-xl font-bold text-gray-900">Quản lý rút tiền</h2>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative">
+              <Search className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Tìm kiếm yêu cầu rút tiền..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+              />
+            </div>
+            <select
+              value={payoutStatusFilter}
+              onChange={(e) => setPayoutStatusFilter(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+            >
+              <option value="all">Tất cả trạng thái</option>
+              <option value="Pending">Chờ duyệt</option>
+              <option value="Completed">Đã duyệt</option>
+              <option value="Rejected">Đã từ chối</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Payouts Table */}
+      <div className="bg-white rounded-xl shadow-md overflow-hidden">
+        {isLoading ? (
+          <div className="p-8 text-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-yellow-500 border-t-transparent"></div>
+            <p className="mt-2 text-gray-600">Đang tải dữ liệu...</p>
+          </div>
+        ) : error ? (
+          <div className="p-8 text-center text-red-500">
+            <p>{error}</p>
+            <button
+              onClick={() => setActiveTab("payouts")}
+              className="mt-2 text-yellow-600 hover:underline"
+            >
+              Thử lại
+            </button>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    ID Đơn hàng
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Người nhận
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Số tiền
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Trạng thái
+                  </th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Thao tác
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {payouts && payouts.length > 0 ? (
+                  payouts
+                    .filter((payout) => {
+                      // Filter by search term
+                      const matchesSearch =
+                        !searchTerm ||
+                        payout.orderID
+                          .toLowerCase()
+                          .includes(searchTerm.toLowerCase()) ||
+                        payout.id
+                          .toLowerCase()
+                          .includes(searchTerm.toLowerCase()) ||
+                        payout.recieverId
+                          .toLowerCase()
+                          .includes(searchTerm.toLowerCase());
+
+                      // Filter by status
+                      const matchesStatus =
+                        payoutStatusFilter === "all" ||
+                        payout.status === payoutStatusFilter;
+
+                      return matchesSearch && matchesStatus;
+                    })
+                    .map((payout) => (
+                      <tr key={payout.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm font-medium text-blue-600">
+                            #{payout.id ? payout.id.substring(0, 8) : "N/A"}...
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm text-gray-900">
+                            {payout.recieverName}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm font-semibold text-green-600">
+                            {payout.totalPrice.toLocaleString()} VNĐ
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getPaymentStatusBadgeClass(
+                              payout.status
+                            )}`}
+                          >
+                            {payout.status === "Pending" && "Chờ duyệt"}
+                            {payout.status === "Completed" && "Đã duyệt"}
+                            {payout.status === "Rejected" && "Đã từ chối"}
+                            {!["Pending", "Completed", "Rejected"].includes(
+                              payout.status
+                            ) && payout.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <button
+                            onClick={() => handleViewPayoutDetails(payout.id)}
+                            className="p-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-colors"
+                            title="Xem chi tiết"
+                          >
+                            <Eye className="h-5 w-5" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="px-6 py-8 text-center text-gray-500"
+                    >
+                      Không có yêu cầu rút tiền nào
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Summary */}
+      {payouts && payouts.length > 0 && (
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 bg-yellow-50 rounded-lg">
+              <p className="text-sm text-gray-600">Chờ duyệt</p>
+              <p className="text-2xl font-bold text-yellow-600">
+                {payouts.filter((p) => p.status === "Pending").length}
+              </p>
+            </div>
+            <div className="p-4 bg-green-50 rounded-lg">
+              <p className="text-sm text-gray-600">Đã duyệt</p>
+              <p className="text-2xl font-bold text-green-600">
+                {payouts.filter((p) => p.status === "Completed").length}
+              </p>
+            </div>
+            <div className="p-4 bg-blue-50 rounded-lg">
+              <p className="text-sm text-gray-600">Tổng số tiền</p>
+              <p className="text-2xl font-bold text-blue-600">
+                {payouts
+                  .reduce((sum, p) => sum + p.totalPrice, 0)
+                  .toLocaleString()}{" "}
+                VNĐ
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payout Details Modal */}
+      {showPayoutDetailsModal && selectedPayout && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-900">
+                Chi tiết yêu cầu rút tiền
+              </h3>
+              <button
+                onClick={() => setShowPayoutDetailsModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {loadingPayoutDetails ? (
+              <div className="py-8 text-center">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-yellow-500 border-t-transparent"></div>
+                <p className="mt-2 text-gray-600">Đang tải thông tin...</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Status Badge */}
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <span className="text-sm font-medium text-gray-700">Trạng thái</span>
+                  <span
+                    className={`px-3 py-1 rounded-full text-sm font-semibold ${getPaymentStatusBadgeClass(
+                      selectedPayout.status
+                    )}`}
+                  >
+                    {selectedPayout.status === "Pending" && "Chờ duyệt"}
+                    {selectedPayout.status === "Completed" && "Đã duyệt"}
+                    {selectedPayout.status === "Rejected" && "Đã từ chối"}
+                  </span>
+                </div>
+
+                {/* Payout Information */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 border border-gray-200 rounded-lg">
+                    <p className="text-sm text-gray-600 mb-1">ID Đơn hàng</p>
+                    <p className="font-medium text-gray-900 break-all">
+                      {selectedPayout.orderID}
+                    </p>
+                  </div>
+                  <div className="p-4 border border-gray-200 rounded-lg">
+                    <p className="text-sm text-gray-600 mb-1">Số tiền</p>
+                    <p className="text-xl font-bold text-green-600">
+                      {selectedPayout.totalPrice.toLocaleString()} VNĐ
+                    </p>
+                  </div>
+                </div>
+
+                {/* Bank Account Information */}
+                <div className="border-t pt-4">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">
+                    Thông tin tài khoản ngân hàng
+                  </h4>
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="p-4 bg-blue-50 rounded-lg">
+                      <p className="text-sm text-gray-600 mb-1">Ngân hàng</p>
+                      <p className="font-semibold text-gray-900">
+                        {selectedPayout.accountBank || "Chưa có thông tin"}
+                      </p>
+                    </div>
+                    <div className="p-4 bg-blue-50 rounded-lg">
+                      <p className="text-sm text-gray-600 mb-1">Số tài khoản</p>
+                      <p className="font-semibold text-gray-900">
+                        {selectedPayout.accountNumber || "Chưa có thông tin"}
+                      </p>
+                    </div>
+                    <div className="p-4 bg-blue-50 rounded-lg">
+                      <p className="text-sm text-gray-600 mb-1">Tên chủ tài khoản</p>
+                      <p className="font-semibold text-gray-900">
+                        {selectedPayout.accountName || "Chưa có thông tin"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                {selectedPayout.status === "Pending" && (
+                  <div className="flex gap-3 pt-4 border-t">
+                    <button
+                      onClick={() => handleUpdatePayoutStatus(selectedPayout.id, "Completed")}
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+                    >
+                      <CheckCircle className="h-5 w-5" />
+                      Duyệt yêu cầu
+                    </button>
+                    <button
+                      onClick={() => handleUpdatePayoutStatus(selectedPayout.id, "Rejected")}
+                      className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 px-4 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+                    >
+                      <XCircle className="h-5 w-5" />
+                      Từ chối
+                    </button>
+                  </div>
+                )}
+
+                {selectedPayout.status !== "Pending" && (
+                  <div className="pt-4 border-t">
+                    <button
+                      onClick={() => setShowPayoutDetailsModal(false)}
+                      className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                    >
+                      Đóng
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   const renderSettings = () => (
     <div className="space-y-6">
       <div className="bg-white rounded-xl shadow-md p-6">
@@ -1260,6 +1604,17 @@ const Admin: React.FC = () => {
                   <span>Quản lý thanh toán</span>
                 </button>
                 <button
+                  onClick={() => setActiveTab("payouts")}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors duration-200 ${
+                    activeTab === "payouts"
+                      ? "bg-yellow-100 text-yellow-800"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  <CreditCard className="h-5 w-5" />
+                  <span>Quản lý rút tiền</span>
+                </button>
+                <button
                   onClick={() => setActiveTab("settings")}
                   className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors duration-200 ${
                     activeTab === "settings"
@@ -1282,6 +1637,7 @@ const Admin: React.FC = () => {
             {activeTab === "products" && renderProducts()}
             {activeTab === "orders" && renderOrders()}
             {activeTab === "payments" && renderPayments()}
+            {activeTab === "payouts" && renderPayouts()}
             {activeTab === "settings" && renderSettings()}
           </div>
         </div>

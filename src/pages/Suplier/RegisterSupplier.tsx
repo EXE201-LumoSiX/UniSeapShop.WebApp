@@ -7,6 +7,8 @@ import {
   MapPin,
   FileText,
   ArrowLeft,
+  CreditCard,
+  Building2,
 } from "lucide-react";
 import api from "../../config/axios";
 
@@ -23,6 +25,9 @@ const RegisterSupplier: React.FC = () => {
     phoneNumber: "",
     location: "",
     description: "",
+    accountBank: "",
+    accountNumber: "",
+    accountName: "",
   });
 
   // Load user data if available
@@ -106,6 +111,18 @@ const RegisterSupplier: React.FC = () => {
         throw new Error("Vui lòng nhập địa chỉ");
       }
 
+      if (!formData.accountBank.trim()) {
+        throw new Error("Vui lòng nhập tên ngân hàng");
+      }
+
+      if (!formData.accountNumber.trim()) {
+        throw new Error("Vui lòng nhập số tài khoản");
+      }
+
+      if (!formData.accountName.trim()) {
+        throw new Error("Vui lòng nhập tên chủ tài khoản");
+      }
+
       // Register supplier
       const response = await api.post(
         "/api/Auth/register-supplier",
@@ -113,7 +130,9 @@ const RegisterSupplier: React.FC = () => {
           email: formData.email,
           description: formData.description,
           location: formData.location,
-          isActive: true,
+          accountBank: formData.accountBank,
+          accountNumber: formData.accountNumber,
+          accountName: formData.accountName,
         },
         {
           headers: {
@@ -145,10 +164,11 @@ const RegisterSupplier: React.FC = () => {
           "Đăng ký không thành công. Vui lòng thử lại sau.";
         throw new Error(errorMessage);
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error("Error registering supplier:", err);
+      const error = err as { response?: { data?: { error?: { message?: string } } }; message?: string };
       setError(
-        err.response.data.error.message || "Đã xảy ra lỗi khi đăng ký. Vui lòng thử lại sau."
+        error.response?.data?.error?.message || error.message || "Đã xảy ra lỗi khi đăng ký. Vui lòng thử lại sau."
       );
     } finally {
       setIsLoading(false);
@@ -278,7 +298,10 @@ const RegisterSupplier: React.FC = () => {
           </div>
 
           {/* Business Information Section */}
-          <div>
+          <div className="border-b border-gray-200 pb-6">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">
+              Thông tin doanh nghiệp
+            </h2>
             <div className="space-y-6">
               {/* Business Description */}
               <div>
@@ -302,6 +325,81 @@ const RegisterSupplier: React.FC = () => {
                 <p className="text-xs text-gray-500 mt-1">
                   Hãy mô tả chi tiết về loại sản phẩm bạn muốn bán và kinh nghiệm kinh doanh của bạn.
                 </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Bank Account Information Section */}
+          <div className="border-b border-gray-200 pb-6">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">
+              Thông tin tài khoản ngân hàng
+            </h2>
+            <p className="text-sm text-gray-600 mb-4">
+              Thông tin này sẽ được sử dụng để bạn rút tiền từ đơn hàng bán được.
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Bank Name */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Tên ngân hàng <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Building2 className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    name="accountBank"
+                    value={formData.accountBank}
+                    onChange={handleInputChange}
+                    className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                    placeholder="Ví dụ: Vietcombank, BIDV, Techcombank..."
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Account Number */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Số tài khoản <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <CreditCard className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    name="accountNumber"
+                    value={formData.accountNumber}
+                    onChange={handleInputChange}
+                    className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                    placeholder="Nhập số tài khoản"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Account Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Tên chủ tài khoản <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <User className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    name="accountName"
+                    value={formData.accountName}
+                    onChange={handleInputChange}
+                    className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                    placeholder="Nhập tên chủ tài khoản"
+                    required
+                  />
+                </div>
               </div>
             </div>
           </div>
