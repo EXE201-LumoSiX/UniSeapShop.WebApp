@@ -22,7 +22,7 @@ import RegisterSupplier from "./pages/Suplier/RegisterSupplier";
 import PaymentSuccess from "./pages/Payment/PaymentSuccess";
 import PaymentFailed from "./pages/Payment/PaymentFailed";
 import SupplierDetail from "./pages/Suplier/SupplierDetail";
-import SoldProducts from "./pages/Suplier/SoldProducts";
+import SellBuyProducts from "./pages/Suplier/SellBuyProducts";
 
 const App: React.FC = () => {
   const handleLogin = () => {
@@ -59,7 +59,7 @@ const App: React.FC = () => {
         <Route path="/register-supplier" element={<RegisterSupplier />} />
         <Route path="/success-payment" element={<PaymentSuccess />} />
         <Route path="/failed-payment" element={<PaymentFailed />} />
-        <Route path="/sold-products" element={<SoldProducts />} />
+        <Route path="/sell-buy-products" element={<SellBuyProducts />} />
         <Route
           path="/supplierid/:id"
           element={

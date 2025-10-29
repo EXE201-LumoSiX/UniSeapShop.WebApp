@@ -343,10 +343,10 @@ const Header: React.FC = () => {
                       Thông tin
                     </a>
                     <a
-                      href="/sold-products"
+                      href="/sell-buy-products"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
-                      Sản phẩm đã bán
+                      Mua bán 
                     </a>
                     <a
                       href="#"
@@ -508,7 +508,7 @@ const Header: React.FC = () => {
                     Thông tin
                   </a>
                   <a
-                    href="/sold-products"
+                    href="/sell-buy-products"
                     className="block text-gray-700 hover:text-amber-800 px-3 py-2 rounded-md text-base font-medium"
                   >
                     Sản phẩm đã bán
