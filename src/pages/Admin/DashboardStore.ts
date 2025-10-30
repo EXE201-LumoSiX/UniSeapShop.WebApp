@@ -897,13 +897,16 @@ export const useDashboardStore = () => {
         throw new Error("No authentication token found");
       }
 
+      // Map the status to match API expectations
+      const statusValue = newStatus === "Completed" ? "Completed" : "Failed";
+
+      // Try with query parameters instead of body
       const response = await api.put(
-        `api/Payout/${payoutId}`,
-        JSON.stringify(newStatus),
+        `api/Payout?payoutId=${payoutId}&status=${statusValue}`,
+        null,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
           },
         }
       );
@@ -913,14 +916,14 @@ export const useDashboardStore = () => {
         setPayouts(
           payouts.map((payout) =>
             payout.id === payoutId
-              ? { ...payout, status: newStatus }
+              ? { ...payout, status: statusValue }
               : payout
           )
         );
 
         // Update selected payout if it's the one being viewed
         if (selectedPayout && selectedPayout.id === payoutId) {
-          setSelectedPayout({ ...selectedPayout, status: newStatus });
+          setSelectedPayout({ ...selectedPayout, status: statusValue });
         }
 
         alert(`Đã ${newStatus === "Completed" ? "duyệt" : "từ chối"} yêu cầu rút tiền thành công!`);

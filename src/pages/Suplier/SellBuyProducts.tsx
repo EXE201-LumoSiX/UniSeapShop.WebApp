@@ -702,7 +702,7 @@ const SellBuyProducts: React.FC = () => {
                             ? hasCompletedPayout(product.orderId)
                               ? "Đã rút tiền" 
                               : hasPendingPayout(product.orderId)
-                              ? "Đang chờ duyệt rút tiền"
+                              ? "Đang xử lí"
                               : "Có thể rút tiền" 
                             : "Chưa thanh toán"}
                         </span>
