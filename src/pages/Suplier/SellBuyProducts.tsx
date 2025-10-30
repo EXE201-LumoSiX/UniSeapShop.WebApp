@@ -714,7 +714,7 @@ const SellBuyProducts: React.FC = () => {
                             <div className="flex items-center gap-2 px-4 py-2 bg-orange-50 rounded-lg">
                               <Clock className="h-4 w-4 text-orange-600" />
                               <span className="text-sm font-medium text-orange-700">
-                                Chờ admin duyệt
+                                Chờ từ 1-2h
                               </span>
                             </div>
                           ) : hasCompletedPayout(product.orderId) ? (
