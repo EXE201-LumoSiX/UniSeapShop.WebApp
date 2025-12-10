@@ -1,8 +1,7 @@
 
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
-const API_URL = 'https://uniseapshop.fpt-devteam.fun/'; 
-
+const API_URL = 'https://uniseapshop-webapi.onrender.com/'; 
 const api = axios.create({
   baseURL: API_URL,
   timeout: 10000,
